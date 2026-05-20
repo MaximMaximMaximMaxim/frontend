@@ -24,6 +24,34 @@ cd frontend
 npm run build
 ```
 
+## Запуск через Docker Compose
+
+Docker Compose используется для серверного или демо-запуска. Контейнер не
+запускает Vite dev server: он собирает frontend через `npm run build` и
+раздаёт готовую папку `dist/` через Nginx.
+
+```powershell
+cd frontend
+docker compose up --build
+```
+
+После запуска frontend доступен по адресу:
+
+```text
+http://localhost:8080
+```
+
+Остановка:
+
+```powershell
+docker compose down
+```
+
+`npm run dev` используется только для локальной разработки. `docker compose up`
+используется для воспроизводимого серверного или демо-запуска production build.
+Frontend обращается к реальному API `https://api.ustyantsevmd.ru`. Backend не
+входит в этот compose, backend compose не изменяется, моки не используются.
+
 ## API
 
 По умолчанию используется:

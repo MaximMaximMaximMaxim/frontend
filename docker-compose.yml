@@ -1,0 +1,16 @@
+services:
+  frontend:
+    container_name: sovereign-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: https://api.ustyantsevmd.ru
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
