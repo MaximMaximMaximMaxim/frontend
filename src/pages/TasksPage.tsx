@@ -1,30 +1,30 @@
 import { useMemo, useState } from "react";
+import type { ColumnWithTasks } from "../api/adapters";
 import { EmptyState } from "../components/EmptyState";
 import { TaskCard } from "../components/TaskCard";
 import { TaskForm } from "../components/TaskForm";
-import type { BoardDetail } from "../types/api";
+import type { BoardRead } from "../types/api";
 import type { Task, TaskFormValues } from "../types/task";
 
 interface TasksPageProps {
-  activeBoard: BoardDetail | null;
+  activeBoard: BoardRead | null;
+  columns: ColumnWithTasks[];
   tasks: Task[];
   isMutating: boolean;
   onSaveTask: (values: TaskFormValues) => void;
-  onDeleteTask: (taskId: number) => void;
 }
 
 export function TasksPage({
   activeBoard,
+  columns,
   tasks,
   isMutating,
   onSaveTask,
-  onDeleteTask,
 }: TasksPageProps) {
   const [query, setQuery] = useState("");
   const [columnFilter, setColumnFilter] = useState("all");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const columns = activeBoard?.columns ?? [];
   const filteredTasks = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("ru-RU");
 
@@ -34,7 +34,7 @@ export function TasksPage({
         task.title.toLocaleLowerCase("ru-RU").includes(normalizedQuery) ||
         (task.description ?? "").toLocaleLowerCase("ru-RU").includes(normalizedQuery);
       const matchesColumn =
-        columnFilter === "all" ? true : task.columnId === Number(columnFilter);
+        columnFilter === "all" ? true : task.column_id === Number(columnFilter);
 
       return matchesQuery && matchesColumn;
     });
@@ -67,7 +67,7 @@ export function TasksPage({
           <div>
             <h2 className="text-lg font-semibold text-slate-950">Список задач</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Поиск работает только по полям карточки: название и описание.
+              Поиск работает по реальным полям задачи: название и описание.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -96,7 +96,7 @@ export function TasksPage({
                 <option value="all">Все этапы</option>
                 {columns.map((column) => (
                   <option key={column.id} value={column.id}>
-                    {column.title}
+                    {column.name}
                   </option>
                 ))}
               </select>
@@ -107,17 +107,12 @@ export function TasksPage({
         {filteredTasks.length > 0 ? (
           <div className="grid gap-4 lg:grid-cols-2">
             {filteredTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onDelete={onDeleteTask}
-                onEdit={setEditingTask}
-              />
+              <TaskCard key={task.id} task={task} onEdit={setEditingTask} />
             ))}
           </div>
         ) : (
           <EmptyState
-            description="Карточек по текущим условиям нет. Измените поиск или создайте задачу."
+            description="Задач по текущим условиям нет. Измените поиск или создайте задачу."
             title="Задачи не найдены"
           />
         )}

@@ -1,61 +1,111 @@
-export interface BoardCreate {
-  title: string;
+export interface ProjectCreate {
+  name: string;
   description?: string | null;
 }
 
-export interface BoardUpdate {
-  title?: string | null;
-  description?: string | null;
-}
-
-export interface BoardOut {
+export interface ProjectRead {
   id: number;
-  title: string;
+  name: string;
   description?: string | null;
+  created_at: string;
 }
 
-export interface BoardDetail extends BoardOut {
-  columns: ColumnWithCards[];
+export interface BoardCreate {
+  project_id: number;
+  name: string;
+  is_default?: boolean;
 }
+
+export interface BoardRead {
+  id: number;
+  project_id: number;
+  name: string;
+  is_default: boolean;
+  created_at: string;
+}
+
+export type ColumnType =
+  | "backlog"
+  | "in_progress"
+  | "review"
+  | "done"
+  | "fix"
+  | "archived"
+  | "custom";
 
 export interface ColumnCreate {
-  title: string;
-  position?: number;
+  name: string;
+  position: number;
+  column_type?: ColumnType;
 }
 
-export interface ColumnUpdate {
-  title?: string | null;
-  position?: number | null;
-}
-
-export interface ColumnOut {
+export interface ColumnRead {
   id: number;
-  title: string;
-  position?: number;
+  board_id: number;
+  name: string;
+  position: number;
+  column_type: ColumnType;
+  is_archived: boolean;
+  created_at: string;
 }
 
-export interface ColumnWithCards extends ColumnOut {
-  cards: CardOut[];
-}
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
-export interface CardCreate {
+export interface TaskCreate {
+  project_id: number;
+  column_id: number;
   title: string;
   description?: string | null;
-  position?: number;
+  priority?: TaskPriority;
+  estimate?: number | null;
+  due_date?: string | null;
+  created_by_id?: number | null;
+  assigned_to_id?: number | null;
 }
 
-export interface CardUpdate {
+export interface TaskRead {
+  id: number;
+  project_id: number;
+  board_id: number;
+  column_id: number;
+  title: string;
+  description?: string | null;
+  priority: TaskPriority;
+  estimate?: number | null;
+  due_date?: string | null;
+  created_by_id?: number | null;
+  assigned_to_id?: number | null;
+  is_bug: boolean;
+  started_at?: string | null;
+  completed_at?: string | null;
+  archived_at?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface TaskUpdate {
   title?: string | null;
   description?: string | null;
-  position?: number | null;
-  column_id?: number | null;
+  priority?: TaskPriority | null;
+  estimate?: number | null;
+  due_date?: string | null;
+  assigned_to_id?: number | null;
 }
 
-export interface CardOut {
-  id: number;
-  title: string;
-  description?: string | null;
-  position?: number;
+export interface TaskMove {
+  column_id: number;
+}
+
+export interface AnalyticsSummary {
+  total_by_status: Record<string, number>;
+  average_completion_time_hours: number | null;
+  completed_tasks: number;
+  bug_tasks: number;
+  average_time_to_start_hours: number | null;
+  average_bug_close_time_hours: number | null;
+  completion_ratio: number | null;
+  closed_in_period: number;
+  overdue_tasks: number;
 }
 
 export interface ValidationError {

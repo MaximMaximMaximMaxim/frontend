@@ -3,113 +3,105 @@ const API_BASE_URL = (process.env.VITE_API_BASE_URL ?? "https://api.ustyantsevmd
   "",
 );
 
-const now = new Date();
-const stamp = new Intl.DateTimeFormat("ru-RU", {
-  day: "2-digit",
-  month: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-}).format(now);
+const projectSeed = {
+  name: "Транстелематика — хакатон MVP",
+  description: "Демо-проект для проверки системы управления задачами и командной аналитики.",
+};
 
-const stages = [
-  { title: "Новая", cards: [] },
-  { title: "В работе", cards: [] },
-  { title: "На согласовании", cards: [] },
-  { title: "Выполнена", cards: [] },
-  { title: "Просрочена", cards: [] },
+const boardSeed = {
+  name: "План работ команды",
+  is_default: false,
+};
+
+const columnSeeds = [
+  { name: "Новая", column_type: "backlog", position: 1 },
+  { name: "Запланирована", column_type: "custom", position: 2 },
+  { name: "В работе", column_type: "in_progress", position: 3 },
+  { name: "На согласовании", column_type: "review", position: 4 },
+  { name: "Просрочена", column_type: "custom", position: 5 },
+  { name: "Выполнена", column_type: "done", position: 6 },
 ];
 
-const demoBoards = [
+const taskSeeds = [
   {
-    title: `Демо: молодые таланты ${stamp}`,
-    description: "Планирование и контроль задач по направлению молодых талантов.",
-    cardsByStage: {
-      "Новая": [
-        ["Согласовать постановку кейса", "Подготовить финальную версию кейса для команды."],
-        ["Собрать список вузов", "Подготовить первичный список партнёров для обсуждения."],
-      ],
-      "В работе": [
-        ["Подготовить участие в хакатоне", "Собрать материалы, расписание и список ответственных."],
-        ["Развить партнёрство с 5 вузами", "Проверить текущие договорённости и следующие шаги."],
-      ],
-      "На согласовании": [
-        ["Заключить соглашение с МИРЭА", "Документы переданы на внутреннее согласование."],
-      ],
-      "Выполнена": [
-        ["Опубликовать программу встречи", "Программа размещена для участников."],
-      ],
-      "Просрочена": [
-        ["Обновить список наставников", "Нужно повторно запросить подтверждения участия."],
-      ],
-    },
+    column: "В работе",
+    title: "Развить партнёрство с 5 вузами",
+    description: ["Период: Год", "Отдел: Молодые таланты", "Ответственный: Иван"],
+    priority: "high",
+    estimate: 40,
+    due_date: "2026-12-31",
   },
   {
-    title: `Демо: операционная подготовка ${stamp}`,
-    description: "Задачи по подготовке рабочих мест и внутренних мероприятий.",
-    cardsByStage: {
-      "Новая": [
-        ["Проверить переговорные", "Сверить доступность комнат перед мероприятием."],
-        ["Заказать расходные материалы", "Подготовить список необходимого оборудования."],
-      ],
-      "В работе": [
-        ["Подготовить рабочие места для стажёров", "Проверить оборудование и доступы."],
-        ["Обновить инструкцию для офиса", "Собрать короткую памятку для новых участников."],
-      ],
-      "На согласовании": [
-        ["Согласовать план рассадки", "План передан на проверку организаторам."],
-      ],
-      "Выполнена": [
-        ["Проверить проекторы", "Оборудование проверено и готово к работе."],
-      ],
-      "Просрочена": [
-        ["Подготовить таблички навигации", "Макеты готовы, печать задерживается."],
-      ],
-    },
+    column: "На согласовании",
+    title: "Заключить соглашение с МИРЭА",
+    description: ["Период: Квартал", "Отдел: Молодые таланты", "Ответственный: Иван"],
+    priority: "high",
+    estimate: 24,
+    due_date: "2026-07-15",
   },
   {
-    title: `Демо: HR и адаптация ${stamp}`,
-    description: "Задачи по найму, адаптации и внутренним коммуникациям.",
-    cardsByStage: {
-      "Новая": [
-        ["Подготовить вопросы для интервью", "Собрать единый список вопросов для команды."],
-      ],
-      "В работе": [
-        ["Обновить программу адаптации новичков", "Проверить материалы и расписание первой недели."],
-        ["Подготовить отчёт по найму молодых специалистов", "Собрать текущие цифры и основные выводы."],
-      ],
-      "На согласовании": [
-        ["Согласовать welcome-презентацию", "Версия отправлена руководителю команды."],
-      ],
-      "Выполнена": [
-        ["Обновить шаблон письма кандидату", "Новый шаблон добавлен в процесс найма."],
-      ],
-      "Просрочена": [
-        ["Проверить обратную связь по стажировке", "Не хватает ответов от части участников."],
-      ],
-    },
+    column: "В работе",
+    title: "Подготовить участие в хакатоне",
+    description: ["Период: Месяц", "Отдел: Молодые таланты", "Ответственный: Иван"],
+    priority: "high",
+    estimate: 32,
+    due_date: "2026-06-10",
   },
   {
-    title: `Демо: финансы и ИТ ${stamp}`,
-    description: "Контроль задач по отчётности, доступам и инфраструктуре.",
-    cardsByStage: {
-      "Новая": [
-        ["Проверить доступы новых сотрудников", "Сверить список учётных записей и рабочих сервисов."],
-        ["Запланировать проверку оборудования", "Согласовать окно для технической проверки."],
-      ],
-      "В работе": [
-        ["Подготовить отчёт по затратам подразделения", "Собрать данные по текущему периоду."],
-        ["Проверить резервные каналы связи", "Проверить доступность и зафиксировать результат."],
-      ],
-      "На согласовании": [
-        ["Согласовать бюджет мероприятия", "Финальная версия сметы на проверке."],
-      ],
-      "Выполнена": [
-        ["Обновить список сервисных заявок", "Список актуализирован для команды."],
-      ],
-      "Просрочена": [
-        ["Закрыть старые заявки по доступам", "Часть заявок требует повторной проверки."],
-      ],
-    },
+    column: "Новая",
+    title: "Согласовать постановку кейса",
+    description: ["Период: Неделя", "Отдел: Молодые таланты", "Ответственный: Иван"],
+    priority: "high",
+    estimate: 8,
+    due_date: "2026-05-28",
+  },
+  {
+    column: "Запланирована",
+    title: "Подготовить рабочие места для стажёров",
+    description: ["Период: Месяц", "Отдел: АХО", "Ответственный: Мария"],
+    priority: "medium",
+    estimate: 16,
+    due_date: "2026-06-20",
+  },
+  {
+    column: "В работе",
+    title: "Проверить переговорные перед мероприятием",
+    description: ["Период: Неделя", "Отдел: АХО", "Ответственный: Алексей"],
+    priority: "medium",
+    estimate: 6,
+    due_date: "2026-05-25",
+  },
+  {
+    column: "Запланирована",
+    title: "Обновить программу адаптации новичков",
+    description: ["Период: Квартал", "Отдел: HR", "Ответственный: Ольга"],
+    priority: "medium",
+    estimate: 20,
+    due_date: "2026-07-01",
+  },
+  {
+    column: "В работе",
+    title: "Подготовить отчёт по найму молодых специалистов",
+    description: ["Период: Месяц", "Отдел: HR", "Ответственный: Анна"],
+    priority: "medium",
+    estimate: 12,
+    due_date: "2026-06-05",
+  },
+  {
+    column: "В работе",
+    title: "Проверить доступы новых сотрудников",
+    description: ["Период: Неделя", "Отдел: ИТ", "Ответственный: Дмитрий"],
+    priority: "medium",
+    estimate: 8,
+    due_date: "2026-05-27",
+  },
+  {
+    column: "Просрочена",
+    title: "Подготовить отчёт по затратам подразделения",
+    description: ["Период: Месяц", "Отдел: Финансы", "Ответственный: Елена"],
+    priority: "high",
+    estimate: 16,
+    due_date: "2026-05-01",
   },
 ];
 
@@ -127,73 +119,118 @@ async function request(path, options = {}) {
   const payload = text ? JSON.parse(text) : null;
 
   if (!response.ok) {
-    throw new Error(`${options.method ?? "GET"} ${path} -> ${response.status}: ${text}`);
+    const method = options.method ?? "GET";
+    const detail =
+      payload && typeof payload === "object" ? JSON.stringify(payload, null, 2) : text;
+    throw new Error(`${method} ${path} -> ${response.status}\n${detail}`);
   }
 
   return payload;
 }
 
-function toStageList(cardsByStage) {
-  return stages.map((stage) => ({
-    ...stage,
-    cards: cardsByStage[stage.title] ?? [],
-  }));
+function jsonBody(payload) {
+  return JSON.stringify(payload);
+}
+
+function toApiDateTime(date) {
+  return new Date(`${date}T12:00:00.000Z`).toISOString();
+}
+
+function makeTaskPayload(taskSeed, projectId, columnId) {
+  const payload = {
+    project_id: projectId,
+    column_id: columnId,
+    title: taskSeed.title,
+    description: taskSeed.description.join("\n"),
+    priority: taskSeed.priority,
+    estimate: taskSeed.estimate,
+    due_date: toApiDateTime(taskSeed.due_date),
+  };
+
+  return Object.fromEntries(
+    Object.entries(payload).filter(([, value]) => value !== "" && value != null),
+  );
+}
+
+async function createProject() {
+  return request("/projects/", {
+    method: "POST",
+    body: jsonBody(projectSeed),
+  });
+}
+
+async function createBoard(projectId) {
+  return request("/boards/", {
+    method: "POST",
+    body: jsonBody({
+      project_id: projectId,
+      name: boardSeed.name,
+      is_default: boardSeed.is_default,
+    }),
+  });
+}
+
+async function createColumns(boardId) {
+  const columns = [];
+
+  for (const columnSeed of columnSeeds) {
+    const column = await request(`/boards/${boardId}/columns`, {
+      method: "POST",
+      body: jsonBody(columnSeed),
+    });
+    columns.push(column);
+  }
+
+  return columns;
+}
+
+async function createTasks(projectId, columns) {
+  const columnsByName = new Map(columns.map((column) => [column.name, column]));
+  const tasks = [];
+
+  for (const taskSeed of taskSeeds) {
+    const column = columnsByName.get(taskSeed.column);
+
+    if (!column) {
+      throw new Error(`Не найдена колонка для задачи "${taskSeed.title}": ${taskSeed.column}`);
+    }
+
+    const task = await request("/tasks/", {
+      method: "POST",
+      body: jsonBody(makeTaskPayload(taskSeed, projectId, column.id)),
+    });
+    tasks.push(task);
+  }
+
+  return tasks;
 }
 
 async function seed() {
-  const createdBoards = [];
-  let createdColumns = 0;
-  let createdCards = 0;
-
-  for (const boardSeed of demoBoards) {
-    const board = await request("/boards", {
-      method: "POST",
-      body: JSON.stringify({
-        title: boardSeed.title,
-        description: boardSeed.description,
-      }),
-    });
-    createdBoards.push(board);
-
-    const stageList = toStageList(boardSeed.cardsByStage);
-
-    for (const [stageIndex, stage] of stageList.entries()) {
-      const column = await request(`/boards/${board.id}/columns`, {
-        method: "POST",
-        body: JSON.stringify({
-          title: stage.title,
-          position: stageIndex,
-        }),
-      });
-      createdColumns += 1;
-
-      for (const [cardIndex, [title, description]] of stage.cards.entries()) {
-        await request(`/columns/${column.id}/cards`, {
-          method: "POST",
-          body: JSON.stringify({
-            title,
-            description,
-            position: cardIndex,
-          }),
-        });
-        createdCards += 1;
-      }
-    }
-  }
-
-  console.log("Демо-данные добавлены в реальный API.");
+  console.log("Создаю демо-данные в реальном API.");
   console.log(`API: ${API_BASE_URL}`);
-  console.log(`Досок: ${createdBoards.length}`);
-  console.log(`Колонок: ${createdColumns}`);
-  console.log(`Карточек: ${createdCards}`);
-  console.log("Созданные доски:");
-  for (const board of createdBoards) {
-    console.log(`- #${board.id}: ${board.title}`);
+
+  const project = await createProject();
+  const board = await createBoard(project.id);
+  const columns = await createColumns(board.id);
+  const tasks = await createTasks(project.id, columns);
+
+  console.log("Демо-данные созданы.");
+  console.log(`Project: #${project.id} ${project.name}`);
+  console.log(`Board: #${board.id} ${board.name}`);
+  console.log(`Columns: ${columns.length}`);
+  console.log(`Tasks: ${tasks.length}`);
+  console.log("Columns:");
+  for (const column of columns) {
+    console.log(`- #${column.id}: ${column.name} (${column.column_type})`);
+  }
+  console.log("Tasks:");
+  for (const task of tasks) {
+    console.log(`- #${task.id}: ${task.title}`);
   }
 }
 
 seed().catch((error) => {
-  console.error("Не удалось добавить демо-данные.");
-  console.error(error);
+  console.error("Не удалось создать демо-данные.");
+  console.error(error instanceof Error ? error.message : error);
   process.exit(1);
 });

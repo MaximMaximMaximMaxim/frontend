@@ -1,19 +1,28 @@
+import { formatTaskPriority } from "../api/adapters";
 import type { Task } from "../types/task";
 
 interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
-  onDelete: (taskId: number) => void;
 }
 
-export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
+function formatDate(value: string | null | undefined): string {
+  if (!value) {
+    return "—";
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString("ru-RU");
+}
+
+export function TaskCard({ task, onEdit }: TaskCardProps) {
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-slate-950">{task.title}</h3>
           <p className="mt-1 text-xs font-medium uppercase tracking-wide text-teal-700">
-            {task.columnTitle}
+            {task.columnName}
           </p>
         </div>
         <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
@@ -27,16 +36,29 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
         <p className="mt-3 text-sm leading-6 text-slate-400">Описание не заполнено</p>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <span className="text-xs text-slate-500">Позиция: {task.position ?? 0}</span>
-        <div className="flex gap-2">
-          <button className="btn-secondary px-3 py-1.5" type="button" onClick={() => onEdit(task)}>
-            Редактировать
-          </button>
-          <button className="btn-danger px-3 py-1.5" type="button" onClick={() => onDelete(task.id)}>
-            Удалить
-          </button>
+      <dl className="mt-4 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+        <div>
+          <dt className="font-semibold text-slate-500">Приоритет</dt>
+          <dd>{formatTaskPriority(task.priority)}</dd>
         </div>
+        <div>
+          <dt className="font-semibold text-slate-500">Срок</dt>
+          <dd>{formatDate(task.due_date)}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold text-slate-500">Оценка</dt>
+          <dd>{task.estimate ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold text-slate-500">ID исполнителя</dt>
+          <dd>{task.assigned_to_id ?? "—"}</dd>
+        </div>
+      </dl>
+
+      <div className="mt-4 flex justify-end">
+        <button className="btn-secondary px-3 py-1.5" type="button" onClick={() => onEdit(task)}>
+          Редактировать
+        </button>
       </div>
     </article>
   );

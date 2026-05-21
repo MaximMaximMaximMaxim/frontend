@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { AppShell, type PageKey } from "./components/AppShell";
 import { BoardControls } from "./components/BoardControls";
+import { EmptyState } from "./components/EmptyState";
 import { ErrorNotice } from "./components/ErrorNotice";
 import { LoadingState } from "./components/LoadingState";
 import { useKanbanData } from "./hooks/useKanbanData";
@@ -24,10 +25,14 @@ export function App() {
       <div className="space-y-5">
         <BoardControls
           activeBoardId={data.activeBoardId}
+          activeProjectId={data.activeProjectId}
           boards={data.boards}
           isDisabled={data.isLoading || data.isMutating}
+          projects={data.projects}
           onCreateBoard={data.createBoard}
+          onCreateProject={data.createProject}
           onSelectBoard={data.selectBoard}
+          onSelectProject={data.selectProject}
         />
 
         {data.error ? <ErrorNotice message={data.error} /> : null}
@@ -38,26 +43,36 @@ export function App() {
         <Suspense fallback={<LoadingState label="Загрузка раздела..." />}>
           {data.isLoading ? (
             <LoadingState />
+          ) : data.projects.length === 0 ? (
+            <EmptyState
+              description="Создайте первый проект в верхнем блоке, чтобы добавить доски, этапы и задачи."
+              title="Проектов пока нет"
+            />
           ) : data.isBoardLoading ? (
-            <LoadingState label="Загрузка выбранной доски..." />
+            <LoadingState label="Загрузка данных..." />
           ) : activePage === "dashboard" ? (
             <DashboardPage
               activeBoard={data.activeBoard}
+              activeProject={data.activeProject}
+              analyticsSummary={data.analyticsSummary}
               boards={data.boards}
+              columns={data.columns}
               healthStatus={data.healthStatus}
+              projects={data.projects}
               tasks={data.tasks}
             />
           ) : activePage === "tasks" ? (
             <TasksPage
               activeBoard={data.activeBoard}
+              columns={data.columns}
               isMutating={data.isMutating}
               tasks={data.tasks}
-              onDeleteTask={data.deleteTask}
               onSaveTask={data.saveTask}
             />
           ) : (
             <KanbanPage
               activeBoard={data.activeBoard}
+              columns={data.columns}
               isMutating={data.isMutating}
               onCreateColumn={data.createColumn}
               onMoveTask={data.moveTask}

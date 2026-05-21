@@ -1,10 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { flattenBoardTasks, mapTaskToApiPayload } from "../api/adapters";
-import { createBoard, getBoard, listBoards } from "../api/boards";
-import { createCard, deleteCard, updateCard } from "../api/cards";
-import { createColumn } from "../api/columns";
+import {
+  buildColumnsWithTasks,
+  buildTaskCreatePayload,
+  buildTaskUpdatePayload,
+  flattenColumnTasks,
+} from "../api/adapters";
+import { getAnalyticsSummary } from "../api/analytics";
+import { createBoard, listBoards } from "../api/boards";
+import { createColumn, listColumns } from "../api/columns";
 import { getHealth } from "../api/health";
-import type { BoardDetail, BoardOut, CardCreate, CardUpdate } from "../types/api";
+import { createProject, listProjects } from "../api/projects";
+import { createTask, listTasks, moveTask, updateTask } from "../api/tasks";
+import type {
+  AnalyticsSummary,
+  BoardRead,
+  ColumnRead,
+  ColumnType,
+  ProjectRead,
+  TaskRead,
+} from "../types/api";
 import type { Task, TaskFormValues } from "../types/task";
 
 function getErrorMessage(error: unknown): string {
@@ -15,10 +29,42 @@ function getErrorMessage(error: unknown): string {
   return "Не удалось связаться с API. Проверьте подключение и попробуйте ещё раз.";
 }
 
+function pickProjectId(projects: ProjectRead[], currentId: number | null, preferredId?: number) {
+  if (preferredId && projects.some((project) => project.id === preferredId)) {
+    return preferredId;
+  }
+
+  if (currentId && projects.some((project) => project.id === currentId)) {
+    return currentId;
+  }
+
+  return projects[0]?.id ?? null;
+}
+
+function pickBoardId(boards: BoardRead[], currentId: number | null, preferredId?: number) {
+  if (preferredId && boards.some((board) => board.id === preferredId)) {
+    return preferredId;
+  }
+
+  if (currentId && boards.some((board) => board.id === currentId)) {
+    return currentId;
+  }
+
+  return boards.find((board) => board.is_default)?.id ?? boards[0]?.id ?? null;
+}
+
+interface MutationOptions {
+  errorMessage?: string;
+}
+
 export function useKanbanData() {
-  const [boards, setBoards] = useState<BoardOut[]>([]);
+  const [projects, setProjects] = useState<ProjectRead[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<number | null>(null);
+  const [boards, setBoards] = useState<BoardRead[]>([]);
   const [activeBoardId, setActiveBoardId] = useState<number | null>(null);
-  const [activeBoard, setActiveBoard] = useState<BoardDetail | null>(null);
+  const [columns, setColumns] = useState<ColumnRead[]>([]);
+  const [projectTasks, setProjectTasks] = useState<TaskRead[]>([]);
+  const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
   const [healthStatus, setHealthStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBoardLoading, setIsBoardLoading] = useState(false);
@@ -26,27 +72,33 @@ export function useKanbanData() {
   const [error, setError] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
 
-  const refreshBoards = useCallback(async (preferredBoardId?: number) => {
+  const refreshWorkspace = useCallback(async (preferredProjectId?: number) => {
     setError(null);
     setIsLoading(true);
 
     try {
-      const [loadedBoards, health] = await Promise.all([listBoards(), getHealth()]);
-      setBoards(loadedBoards);
-      setHealthStatus(health.status ?? "ok");
+      const [loadedProjects, health, summary] = await Promise.all([
+        listProjects(),
+        getHealth(),
+        getAnalyticsSummary(),
+      ]);
 
-      if (loadedBoards.length === 0) {
-        setActiveBoard(null);
+      setProjects(loadedProjects);
+      setHealthStatus(health.status ?? "ok");
+      setAnalyticsSummary(summary);
+
+      if (loadedProjects.length === 0) {
+        setActiveProjectId(null);
+        setBoards([]);
+        setActiveBoardId(null);
+        setColumns([]);
+        setProjectTasks([]);
+        return;
       }
 
-      setActiveBoardId((currentBoardId) => {
-        return (
-          preferredBoardId ??
-          (loadedBoards.some((board) => board.id === currentBoardId)
-            ? currentBoardId
-            : loadedBoards[0]?.id ?? null)
-        );
-      });
+      setActiveProjectId((currentProjectId) =>
+        pickProjectId(loadedProjects, currentProjectId, preferredProjectId),
+      );
     } catch (caughtError) {
       setError(getErrorMessage(caughtError));
     } finally {
@@ -54,15 +106,51 @@ export function useKanbanData() {
     }
   }, []);
 
-  const refreshActiveBoard = useCallback(async (boardId: number) => {
+  const refreshProjectData = useCallback(
+    async (projectId: number, preferredBoardId?: number) => {
+      setIsBoardLoading(true);
+      setError(null);
+
+      try {
+        const [loadedBoards, loadedTasks] = await Promise.all([
+          listBoards(projectId),
+          listTasks(projectId),
+        ]);
+
+        setBoards(loadedBoards);
+        setProjectTasks(loadedTasks);
+
+        if (loadedBoards.length === 0) {
+          setActiveBoardId(null);
+          setColumns([]);
+          return;
+        }
+
+        setActiveBoardId((currentBoardId) =>
+          pickBoardId(loadedBoards, currentBoardId, preferredBoardId),
+        );
+      } catch (caughtError) {
+        setBoards([]);
+        setActiveBoardId(null);
+        setColumns([]);
+        setProjectTasks([]);
+        setError(getErrorMessage(caughtError));
+      } finally {
+        setIsBoardLoading(false);
+      }
+    },
+    [],
+  );
+
+  const refreshColumns = useCallback(async (boardId: number) => {
     setIsBoardLoading(true);
     setError(null);
 
     try {
-      const board = await getBoard(boardId);
-      setActiveBoard(board);
+      const loadedColumns = await listColumns(boardId);
+      setColumns(loadedColumns);
     } catch (caughtError) {
-      setActiveBoard(null);
+      setColumns([]);
       setError(getErrorMessage(caughtError));
     } finally {
       setIsBoardLoading(false);
@@ -70,24 +158,32 @@ export function useKanbanData() {
   }, []);
 
   useEffect(() => {
-    void refreshBoards();
-  }, [refreshBoards]);
+    void refreshWorkspace();
+  }, [refreshWorkspace]);
+
+  useEffect(() => {
+    if (activeProjectId) {
+      void refreshProjectData(activeProjectId);
+    }
+  }, [activeProjectId, refreshProjectData]);
 
   useEffect(() => {
     if (activeBoardId) {
-      void refreshActiveBoard(activeBoardId);
+      void refreshColumns(activeBoardId);
+    } else {
+      setColumns([]);
     }
-  }, [activeBoardId, refreshActiveBoard]);
+  }, [activeBoardId, refreshColumns]);
 
   const runMutation = useCallback(
-    async (mutation: () => Promise<void>) => {
+    async (mutation: () => Promise<void>, options: MutationOptions = {}) => {
       setOperationError(null);
       setIsMutating(true);
 
       try {
         await mutation();
       } catch (caughtError) {
-        setOperationError(getErrorMessage(caughtError));
+        setOperationError(options.errorMessage ?? getErrorMessage(caughtError));
       } finally {
         setIsMutating(false);
       }
@@ -95,92 +191,143 @@ export function useKanbanData() {
     [],
   );
 
-  const handleCreateBoard = useCallback(
-    (title: string, description: string) =>
+  const handleCreateProject = useCallback(
+    (name: string, description: string) =>
       runMutation(async () => {
-        const board = await createBoard({
-          title: title.trim(),
+        const project = await createProject({
+          name: name.trim(),
           description: description.trim() || null,
         });
-        await refreshBoards(board.id);
+
+        await refreshWorkspace(project.id);
       }),
-    [refreshBoards, runMutation],
+    [refreshWorkspace, runMutation],
+  );
+
+  const handleSelectProject = useCallback((projectId: number) => {
+    setActiveProjectId(projectId);
+    setActiveBoardId(null);
+    setBoards([]);
+    setColumns([]);
+    setProjectTasks([]);
+    setOperationError(null);
+  }, []);
+
+  const handleCreateBoard = useCallback(
+    (name: string) =>
+      runMutation(async () => {
+        if (!activeProjectId) {
+          throw new Error("Сначала выберите или создайте проект.");
+        }
+
+        const board = await createBoard({
+          project_id: activeProjectId,
+          name: name.trim(),
+          is_default: false,
+        });
+
+        await refreshProjectData(activeProjectId, board.id);
+      }),
+    [activeProjectId, refreshProjectData, runMutation],
   );
 
   const handleSelectBoard = useCallback((boardId: number) => {
     setActiveBoardId(boardId);
+    setColumns([]);
     setOperationError(null);
   }, []);
 
   const handleCreateColumn = useCallback(
-    (title: string) =>
+    (name: string, columnType: ColumnType = "custom") =>
       runMutation(async () => {
         if (!activeBoardId) {
           throw new Error("Сначала выберите или создайте доску.");
         }
 
+        const nextPosition =
+          columns.length > 0
+            ? Math.max(...columns.map((column) => column.position)) + 1
+            : 0;
+
         await createColumn(activeBoardId, {
-          title: title.trim(),
-          position: activeBoard?.columns.length ?? 0,
+          name: name.trim(),
+          position: nextPosition,
+          column_type: columnType,
         });
-        await refreshActiveBoard(activeBoardId);
+        await refreshColumns(activeBoardId);
       }),
-    [activeBoard?.columns.length, activeBoardId, refreshActiveBoard, runMutation],
+    [activeBoardId, columns, refreshColumns, runMutation],
   );
 
   const handleSaveTask = useCallback(
     (values: TaskFormValues) =>
       runMutation(async () => {
+        if (!activeProjectId) {
+          throw new Error("Сначала выберите или создайте проект.");
+        }
+
         if (values.id) {
-          await updateCard(values.id, mapTaskToApiPayload(values, true) as CardUpdate);
+          await updateTask(values.id, buildTaskUpdatePayload(values));
         } else {
-          await createCard(
-            values.columnId,
-            mapTaskToApiPayload(values, false) as CardCreate,
-          );
+          await createTask(buildTaskCreatePayload(values, activeProjectId));
         }
 
-        if (activeBoardId) {
-          await refreshActiveBoard(activeBoardId);
-        }
+        await refreshProjectData(activeProjectId, activeBoardId ?? undefined);
       }),
-    [activeBoardId, refreshActiveBoard, runMutation],
-  );
-
-  const handleDeleteTask = useCallback(
-    (taskId: number) =>
-      runMutation(async () => {
-        await deleteCard(taskId);
-
-        if (activeBoardId) {
-          await refreshActiveBoard(activeBoardId);
-        }
-      }),
-    [activeBoardId, refreshActiveBoard, runMutation],
+    [activeBoardId, activeProjectId, refreshProjectData, runMutation],
   );
 
   const handleMoveTask = useCallback(
     (task: Task, columnId: number) =>
       runMutation(async () => {
-        await updateCard(task.id, { column_id: columnId });
-
-        if (activeBoardId) {
-          await refreshActiveBoard(activeBoardId);
+        if (!activeProjectId) {
+          throw new Error("Сначала выберите или создайте проект.");
         }
+
+        await moveTask(task.id, { column_id: columnId });
+        await refreshProjectData(activeProjectId, activeBoardId ?? undefined);
+      }, {
+        errorMessage: "Не удалось переместить задачу. Попробуйте ещё раз.",
       }),
-    [activeBoardId, refreshActiveBoard, runMutation],
+    [activeBoardId, activeProjectId, refreshProjectData, runMutation],
   );
 
-  const tasks = useMemo(
-    () => flattenBoardTasks(activeBoard?.columns ?? []),
-    [activeBoard?.columns],
+  const activeProject = useMemo(
+    () => projects.find((project) => project.id === activeProjectId) ?? null,
+    [activeProjectId, projects],
   );
+  const activeBoard = useMemo(
+    () => boards.find((board) => board.id === activeBoardId) ?? null,
+    [activeBoardId, boards],
+  );
+  const activeBoardTasks = useMemo(() => {
+    if (!activeBoardId) {
+      return [];
+    }
+
+    const columnIds = new Set(columns.map((column) => column.id));
+
+    return projectTasks.filter((task) => {
+      const runtimeBoardId = (task as Partial<TaskRead>).board_id;
+      return runtimeBoardId === activeBoardId || (runtimeBoardId == null && columnIds.has(task.column_id));
+    });
+  }, [activeBoardId, columns, projectTasks]);
+  const columnsWithTasks = useMemo(
+    () => buildColumnsWithTasks(columns, activeBoardTasks),
+    [activeBoardTasks, columns],
+  );
+  const tasks = useMemo(() => flattenColumnTasks(columnsWithTasks), [columnsWithTasks]);
 
   return {
+    projects,
+    activeProject,
+    activeProjectId,
     boards,
     activeBoard,
     activeBoardId,
+    columns: columnsWithTasks,
     tasks,
+    analyticsSummary,
     healthStatus,
     isLoading,
     isBoardLoading,
@@ -188,13 +335,15 @@ export function useKanbanData() {
     error,
     operationError,
     clearOperationError: () => setOperationError(null),
-    refreshBoards,
-    refreshActiveBoard,
+    refreshWorkspace,
+    refreshProjectData,
+    refreshColumns,
+    createProject: handleCreateProject,
+    selectProject: handleSelectProject,
     createBoard: handleCreateBoard,
     selectBoard: handleSelectBoard,
     createColumn: handleCreateColumn,
     saveTask: handleSaveTask,
-    deleteTask: handleDeleteTask,
     moveTask: handleMoveTask,
   };
 }

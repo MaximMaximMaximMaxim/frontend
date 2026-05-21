@@ -1,17 +1,22 @@
 import { FormEvent, useEffect, useState } from "react";
-import type { ColumnWithCards } from "../types/api";
+import {
+  formatDateTimeLocal,
+  TASK_PRIORITY_OPTIONS,
+  type ColumnWithTasks,
+} from "../api/adapters";
+import type { TaskPriority } from "../types/api";
 import type { Task, TaskFormValues } from "../types/task";
 
 interface TaskFormProps {
-  columns: ColumnWithCards[];
+  columns: ColumnWithTasks[];
   editingTask: Task | null;
   isDisabled: boolean;
   onCancelEdit: () => void;
   onSaveTask: (values: TaskFormValues) => void;
 }
 
-function getInitialColumnId(columns: ColumnWithCards[], editingTask: Task | null): number {
-  return editingTask?.columnId ?? columns[0]?.id ?? 0;
+function getInitialColumnId(columns: ColumnWithTasks[], editingTask: Task | null): number {
+  return editingTask?.column_id ?? columns[0]?.id ?? 0;
 }
 
 export function TaskForm({
@@ -23,13 +28,21 @@ export function TaskForm({
 }: TaskFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [position, setPosition] = useState(0);
+  const [priority, setPriority] = useState<TaskPriority>("medium");
+  const [estimate, setEstimate] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [assignedToId, setAssignedToId] = useState("");
   const [columnId, setColumnId] = useState(0);
 
   useEffect(() => {
     setTitle(editingTask?.title ?? "");
     setDescription(editingTask?.description ?? "");
-    setPosition(editingTask?.position ?? 0);
+    setPriority(editingTask?.priority ?? "medium");
+    setEstimate(editingTask?.estimate == null ? "" : String(editingTask.estimate));
+    setDueDate(formatDateTimeLocal(editingTask?.due_date));
+    setAssignedToId(
+      editingTask?.assigned_to_id == null ? "" : String(editingTask.assigned_to_id),
+    );
     setColumnId(getInitialColumnId(columns, editingTask));
   }, [columns, editingTask]);
 
@@ -44,14 +57,20 @@ export function TaskForm({
       id: editingTask?.id,
       title,
       description,
-      position,
+      priority,
+      estimate,
+      dueDate,
+      assignedToId,
       columnId,
     });
 
     if (!editingTask) {
       setTitle("");
       setDescription("");
-      setPosition(0);
+      setPriority("medium");
+      setEstimate("");
+      setDueDate("");
+      setAssignedToId("");
       setColumnId(columns[0]?.id ?? 0);
     }
   }
@@ -66,7 +85,7 @@ export function TaskForm({
             {editingTask ? "Редактирование задачи" : "Новая задача"}
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Поля соответствуют текущей OpenAPI-схеме карточки.
+            Поля соответствуют текущей OpenAPI-схеме задачи.
           </p>
         </div>
         {editingTask ? (
@@ -82,7 +101,7 @@ export function TaskForm({
         </p>
       ) : null}
 
-      <form className="mt-4 grid gap-4 lg:grid-cols-[1.3fr_1fr]" onSubmit={handleSubmit}>
+      <form className="mt-4 grid gap-4 lg:grid-cols-2" onSubmit={handleSubmit}>
         <div>
           <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor="task-title">
             Название
@@ -111,14 +130,85 @@ export function TaskForm({
           >
             {columns.map((column) => (
               <option key={column.id} value={column.id}>
-                {column.title}
+                {column.name}
               </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor="task-description">
+          <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor="task-priority">
+            Приоритет
+          </label>
+          <select
+            className="field"
+            disabled={!hasColumns || isDisabled}
+            id="task-priority"
+            value={priority}
+            onChange={(event) => setPriority(event.target.value as TaskPriority)}
+          >
+            {TASK_PRIORITY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor="task-estimate">
+            Оценка
+          </label>
+          <input
+            className="field"
+            disabled={!hasColumns || isDisabled}
+            id="task-estimate"
+            min={0}
+            placeholder="Число"
+            type="number"
+            value={estimate}
+            onChange={(event) => setEstimate(event.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor="task-due-date">
+            Срок
+          </label>
+          <input
+            className="field"
+            disabled={!hasColumns || isDisabled}
+            id="task-due-date"
+            type="datetime-local"
+            value={dueDate}
+            onChange={(event) => setDueDate(event.target.value)}
+          />
+        </div>
+
+        <div>
+          <label
+            className="mb-2 block text-sm font-semibold text-slate-800"
+            htmlFor="task-assigned-to"
+          >
+            ID исполнителя
+          </label>
+          <input
+            className="field"
+            disabled={!hasColumns || isDisabled}
+            id="task-assigned-to"
+            min={1}
+            placeholder="Числовой ID, если известен"
+            type="number"
+            value={assignedToId}
+            onChange={(event) => setAssignedToId(event.target.value)}
+          />
+        </div>
+
+        <div className="lg:col-span-2">
+          <label
+            className="mb-2 block text-sm font-semibold text-slate-800"
+            htmlFor="task-description"
+          >
             Описание
           </label>
           <textarea
@@ -131,21 +221,9 @@ export function TaskForm({
           />
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor="task-position">
-            Позиция
-          </label>
-          <input
-            className="field"
-            disabled={!hasColumns || isDisabled}
-            id="task-position"
-            min={0}
-            type="number"
-            value={position}
-            onChange={(event) => setPosition(Number(event.target.value))}
-          />
+        <div className="lg:col-span-2">
           <button
-            className="btn-primary mt-4 w-full"
+            className="btn-primary w-full"
             disabled={!hasColumns || isDisabled || !title.trim()}
             type="submit"
           >
