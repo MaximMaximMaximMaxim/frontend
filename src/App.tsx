@@ -1,5 +1,5 @@
-import { lazy, Suspense, useState } from "react";
-import { AppShell, type PageKey } from "./components/AppShell";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { AppShell, type PageKey, type ThemeMode } from "./components/AppShell";
 import { BoardControls } from "./components/BoardControls";
 import { EmptyState } from "./components/EmptyState";
 import { ErrorNotice } from "./components/ErrorNotice";
@@ -16,12 +16,35 @@ const KanbanPage = lazy(() =>
   import("./pages/KanbanPage").then((module) => ({ default: module.KanbanPage })),
 );
 
+const THEME_STORAGE_KEY = "syveren-theme";
+
+function getInitialTheme(): ThemeMode {
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedTheme === "light" || storedTheme === "dark") {
+    return storedTheme;
+  }
+
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function App() {
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
+  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   const data = useKanbanData();
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
   return (
-    <AppShell activePage={activePage} onPageChange={setActivePage}>
+    <AppShell
+      activePage={activePage}
+      theme={theme}
+      onPageChange={setActivePage}
+      onThemeToggle={() => setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"))}
+    >
       <div className="space-y-5">
         <BoardControls
           activeBoardId={data.activeBoardId}

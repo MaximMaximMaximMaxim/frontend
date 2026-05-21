@@ -17,7 +17,7 @@ function formatDate(value: string | null | undefined): string {
 
 export function TaskCard({ task, onEdit }: TaskCardProps) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="task-list-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-slate-950">{task.title}</h3>

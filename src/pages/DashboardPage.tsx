@@ -1,17 +1,10 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import type { ColumnWithTasks } from "../api/adapters";
+import type { CSSProperties } from "react";
+import { formatColumnType, type ColumnWithTasks } from "../api/adapters";
+import { DashboardIntegrationPanel } from "../components/DashboardIntegrationPanel";
 import { EmptyState } from "../components/EmptyState";
 import { MetricCard } from "../components/MetricCard";
-import { UnavailableBlock } from "../components/UnavailableBlock";
 import type { AnalyticsSummary, BoardRead, ProjectRead } from "../types/api";
+import type { DashboardIntegrationItem } from "../types/insights";
 import type { Task } from "../types/task";
 
 interface DashboardPageProps {
@@ -25,9 +18,49 @@ interface DashboardPageProps {
   healthStatus: string | null;
 }
 
-function truncateChartLabel(label: string): string {
-  return label.length > 18 ? `${label.slice(0, 17)}...` : label;
+interface Tone {
+  color: string;
+  soft: string;
 }
+
+const STAGE_TONES: Tone[] = [
+  { color: "var(--stage-primary)", soft: "var(--stage-primary-soft)" },
+  { color: "var(--stage-secondary)", soft: "var(--stage-secondary-soft)" },
+  { color: "var(--stage-warning)", soft: "var(--stage-warning-soft)" },
+  { color: "var(--stage-accent)", soft: "var(--stage-accent-soft)" },
+  { color: "var(--stage-success)", soft: "var(--stage-success-soft)" },
+  { color: "var(--stage-muted)", soft: "var(--stage-muted-soft)" },
+];
+
+const DASHBOARD_INTEGRATION_ITEMS: DashboardIntegrationItem[] = [
+  {
+    id: "team-metrics",
+    title: "Командные метрики",
+    status: "waiting",
+    statusLabel: "Ожидает API",
+    description:
+      "Сводки по людям, отделам, нагрузке и пропускной способности команды.",
+    endpoint: "GET /analytics/metrics",
+  },
+  {
+    id: "ai-insights",
+    title: "AI-инсайты",
+    status: "waiting",
+    statusLabel: "Ожидает API",
+    description:
+      "Риски, узкие места и рекомендуемые действия от аналитического агента.",
+    endpoint: "GET /analytics/ai-insights",
+  },
+  {
+    id: "executive-dashboards",
+    title: "Расширенные дашборды",
+    status: "waiting",
+    statusLabel: "Ожидает API",
+    description:
+      "Готовая зона под графики SLA, дедлайнов, багов и динамики закрытия.",
+    endpoint: "GET /analytics/dashboards",
+  },
+];
 
 function formatNullableNumber(value: number | null | undefined, suffix = ""): string {
   if (value == null) {
@@ -46,6 +79,23 @@ function formatRatio(value: number | null | undefined): string {
   return `${percentage.toFixed(0)}%`;
 }
 
+function getRatioPercent(value: number | null | undefined): number {
+  if (value == null) {
+    return 0;
+  }
+
+  const percentage = value <= 1 ? value * 100 : value;
+  return Math.min(100, Math.max(0, Math.round(percentage)));
+}
+
+function getMeterStyle(tone: Tone, progress: number): CSSProperties {
+  return {
+    "--stage-color": tone.color,
+    "--stage-soft": tone.soft,
+    "--stage-progress": `${progress}%`,
+  } as CSSProperties;
+}
+
 export function DashboardPage({
   projects,
   boards,
@@ -56,30 +106,57 @@ export function DashboardPage({
   analyticsSummary,
   healthStatus,
 }: DashboardPageProps) {
-  const columnDistribution = columns.map((column) => ({
-    name: column.name,
-    tasks: column.tasks.length,
-  }));
-  const statusDistribution = Object.entries(analyticsSummary?.total_by_status ?? {}).map(
-    ([status, total]) => ({
-      status,
-      total,
-    }),
-  );
+  const maxColumnTasks = Math.max(...columns.map((column) => column.tasks.length), 0);
+  const columnDistribution = columns.map((column, index) => {
+    const tasksInColumn = column.tasks.length;
+    const rawProgress = maxColumnTasks > 0 ? (tasksInColumn / maxColumnTasks) * 100 : 0;
+
+    return {
+      id: column.id,
+      name: column.name,
+      typeLabel: formatColumnType(column.column_type),
+      tasks: tasksInColumn,
+      progress: tasksInColumn > 0 ? Math.max(8, Math.round(rawProgress)) : 0,
+      tone: STAGE_TONES[index % STAGE_TONES.length],
+    };
+  });
   const actualTasks = tasks.slice(0, 6);
+  const completionPercent = getRatioPercent(analyticsSummary?.completion_ratio);
+  const riskItems = [
+    {
+      label: "Просрочено",
+      value: analyticsSummary?.overdue_tasks ?? 0,
+      description: "Нужна реакция",
+      tone: { color: "var(--stage-danger)", soft: "var(--stage-danger-soft)" },
+    },
+    {
+      label: "Баги",
+      value: analyticsSummary?.bug_tasks ?? 0,
+      description: "Технический долг",
+      tone: { color: "var(--stage-warning)", soft: "var(--stage-warning-soft)" },
+    },
+    {
+      label: "Закрыто",
+      value: analyticsSummary?.closed_in_period ?? 0,
+      description: "За период",
+      tone: { color: "var(--stage-success)", soft: "var(--stage-success-soft)" },
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      <section>
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <section className="page-panel p-5">
+        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">Дашборд</h2>
+            <h2 className="text-xl font-bold text-slate-950">Дашборд</h2>
             <p className="mt-1 text-sm text-slate-600">
               {activeProject ? `Проект: ${activeProject.name}` : "Проект не выбран"}
               {activeBoard ? ` · Доска: ${activeBoard.name}` : ""}
             </p>
           </div>
-          <p className="text-sm text-slate-500">API health: {healthStatus ?? "не проверен"}</p>
+          <p className="text-sm font-medium text-slate-500">
+            API health: {healthStatus ?? "не проверен"}
+          </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -94,7 +171,7 @@ export function DashboardPage({
         <MetricCard label="Завершено задач" value={analyticsSummary?.completed_tasks ?? "—"} />
         <MetricCard label="Багов" value={analyticsSummary?.bug_tasks ?? "—"} />
         <MetricCard label="Просрочено" value={analyticsSummary?.overdue_tasks ?? "—"} />
-        <MetricCard label="Completion ratio" value={formatRatio(analyticsSummary?.completion_ratio)} />
+        <MetricCard label="Готовность" value={formatRatio(analyticsSummary?.completion_ratio)} />
         <MetricCard
           label="Закрыто за период"
           value={analyticsSummary?.closed_in_period ?? "—"}
@@ -128,31 +205,42 @@ export function DashboardPage({
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-2">
-        <div className="panel min-w-0 overflow-hidden p-5">
-          <h3 className="text-lg font-semibold text-slate-950">Задачи по этапам</h3>
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
+        <div className="panel analytics-card min-w-0 p-5">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">Задачи по этапам</h3>
+              <p className="text-sm text-slate-600">
+                Живой срез по колонкам текущей доски.
+              </p>
+            </div>
+            <span className="analytics-chip">{tasks.length} задач</span>
+          </div>
+
           {columnDistribution.length > 0 ? (
-            <div className="mt-5 h-72 min-w-0 overflow-hidden">
-              <ResponsiveContainer height="100%" width="100%">
-                <BarChart data={columnDistribution} margin={{ left: 0, right: 12, top: 12 }}>
-                  <CartesianGrid stroke="#e2e8f0" strokeDasharray="4 4" />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fill: "#475569", fontSize: 12 }}
-                    tickFormatter={truncateChartLabel}
-                  />
-                  <YAxis allowDecimals={false} tick={{ fill: "#475569", fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{
-                      border: "1px solid #cbd5e1",
-                      borderRadius: 8,
-                      boxShadow: "0 10px 24px rgba(15, 23, 42, 0.12)",
-                    }}
-                    cursor={{ fill: "rgba(20, 184, 166, 0.08)" }}
-                  />
-                  <Bar dataKey="tasks" fill="#0f766e" name="Задач" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="stage-distribution">
+              {columnDistribution.map((column) => (
+                <article
+                  className="stage-row"
+                  key={column.id}
+                  style={getMeterStyle(column.tone, column.progress)}
+                >
+                  <div className="stage-row-header">
+                    <div className="min-w-0">
+                      <h4>{column.name}</h4>
+                      <p>{column.typeLabel}</p>
+                    </div>
+                    <strong>{column.tasks}</strong>
+                  </div>
+                  <div
+                    aria-label={`${column.name}: ${column.tasks} задач`}
+                    className="stage-meter"
+                    role="img"
+                  >
+                    <span className="stage-meter-fill" />
+                  </div>
+                </article>
+              ))}
             </div>
           ) : (
             <div className="mt-5">
@@ -164,39 +252,39 @@ export function DashboardPage({
           )}
         </div>
 
-        <div className="panel min-w-0 overflow-hidden p-5">
-          <h3 className="text-lg font-semibold text-slate-950">Статусы из аналитики API</h3>
-          {statusDistribution.length > 0 ? (
-            <div className="mt-5 h-72 min-w-0 overflow-hidden">
-              <ResponsiveContainer height="100%" width="100%">
-                <BarChart data={statusDistribution} margin={{ left: 0, right: 12, top: 12 }}>
-                  <CartesianGrid stroke="#e2e8f0" strokeDasharray="4 4" />
-                  <XAxis
-                    dataKey="status"
-                    tick={{ fill: "#475569", fontSize: 12 }}
-                    tickFormatter={truncateChartLabel}
-                  />
-                  <YAxis allowDecimals={false} tick={{ fill: "#475569", fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{
-                      border: "1px solid #cbd5e1",
-                      borderRadius: 8,
-                      boxShadow: "0 10px 24px rgba(15, 23, 42, 0.12)",
-                    }}
-                    cursor={{ fill: "rgba(20, 184, 166, 0.08)" }}
-                  />
-                  <Bar dataKey="total" fill="#1d4ed8" name="Задач" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+        <div className="panel analytics-card min-w-0 p-5">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-950">Операционный фокус</h3>
+            <p className="text-sm text-slate-600">
+              Короткая сводка без технических статусов API.
+            </p>
+          </div>
+
+          <div
+            className="completion-card"
+            style={getMeterStyle(
+              { color: "var(--stage-primary)", soft: "var(--stage-primary-soft)" },
+              completionPercent,
+            )}
+          >
+            <div>
+              <span>Готовность доски</span>
+              <strong>{formatRatio(analyticsSummary?.completion_ratio)}</strong>
             </div>
-          ) : (
-            <div className="mt-5">
-              <EmptyState
-                description="Analytics summary пока не вернул распределение по статусам."
-                title="Недостаточно данных"
-              />
+            <div aria-label={`Готовность доски: ${completionPercent}%`} className="stage-meter" role="img">
+              <span className="stage-meter-fill" />
             </div>
-          )}
+          </div>
+
+          <div className="risk-grid">
+            {riskItems.map((item) => (
+              <article className="risk-card" key={item.label} style={getMeterStyle(item.tone, 100)}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+                <p>{item.description}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -218,14 +306,7 @@ export function DashboardPage({
         )}
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <UnavailableBlock title="Отделы и сотрудники" />
-        <UnavailableBlock title="Комментарии и история" />
-        <UnavailableBlock
-          title="ИИ-аналитика"
-          description="ИИ-аналитика недоступна: в текущей OpenAPI-спецификации отсутствует endpoint для AI-аналитики."
-        />
-      </section>
+      <DashboardIntegrationPanel items={DASHBOARD_INTEGRATION_ITEMS} />
     </div>
   );
 }

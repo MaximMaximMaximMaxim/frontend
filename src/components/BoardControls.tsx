@@ -52,8 +52,8 @@ export function BoardControls({
   }
 
   return (
-    <section className="panel p-5">
-      <div className="grid gap-5 xl:grid-cols-2">
+    <section className="panel workspace-toolbar p-4">
+      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="grid gap-4 lg:grid-cols-[1fr_1.3fr]">
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor="project">

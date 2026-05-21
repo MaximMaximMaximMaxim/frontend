@@ -77,15 +77,13 @@ export function useKanbanData() {
     setIsLoading(true);
 
     try {
-      const [loadedProjects, health, summary] = await Promise.all([
+      const [loadedProjects, health] = await Promise.all([
         listProjects(),
         getHealth(),
-        getAnalyticsSummary(),
       ]);
 
       setProjects(loadedProjects);
       setHealthStatus(health.status ?? "ok");
-      setAnalyticsSummary(summary);
 
       if (loadedProjects.length === 0) {
         setActiveProjectId(null);
@@ -157,6 +155,18 @@ export function useKanbanData() {
     }
   }, []);
 
+  const refreshAnalyticsSummary = useCallback(async (projectId: number, boardId?: number | null) => {
+    try {
+      const summary = await getAnalyticsSummary({
+        projectId,
+        boardId: boardId ?? undefined,
+      });
+      setAnalyticsSummary(summary);
+    } catch {
+      setAnalyticsSummary(null);
+    }
+  }, []);
+
   useEffect(() => {
     void refreshWorkspace();
   }, [refreshWorkspace]);
@@ -174,6 +184,34 @@ export function useKanbanData() {
       setColumns([]);
     }
   }, [activeBoardId, refreshColumns]);
+
+  useEffect(() => {
+    if (!activeProjectId) {
+      setAnalyticsSummary(null);
+      return;
+    }
+
+    let isCancelled = false;
+
+    void getAnalyticsSummary({
+      projectId: activeProjectId,
+      boardId: activeBoardId ?? undefined,
+    })
+      .then((summary) => {
+        if (!isCancelled) {
+          setAnalyticsSummary(summary);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setAnalyticsSummary(null);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeBoardId, activeProjectId]);
 
   const runMutation = useCallback(
     async (mutation: () => Promise<void>, options: MutationOptions = {}) => {
@@ -273,8 +311,9 @@ export function useKanbanData() {
         }
 
         await refreshProjectData(activeProjectId, activeBoardId ?? undefined);
+        await refreshAnalyticsSummary(activeProjectId, activeBoardId);
       }),
-    [activeBoardId, activeProjectId, refreshProjectData, runMutation],
+    [activeBoardId, activeProjectId, refreshAnalyticsSummary, refreshProjectData, runMutation],
   );
 
   const handleMoveTask = useCallback(
@@ -286,10 +325,11 @@ export function useKanbanData() {
 
         await moveTask(task.id, { column_id: columnId });
         await refreshProjectData(activeProjectId, activeBoardId ?? undefined);
+        await refreshAnalyticsSummary(activeProjectId, activeBoardId);
       }, {
         errorMessage: "Не удалось переместить задачу. Попробуйте ещё раз.",
       }),
-    [activeBoardId, activeProjectId, refreshProjectData, runMutation],
+    [activeBoardId, activeProjectId, refreshAnalyticsSummary, refreshProjectData, runMutation],
   );
 
   const activeProject = useMemo(
