@@ -305,6 +305,29 @@ textarea {
   gap: 1.25rem;
 }
 
+.status-pill {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.8rem;
+  font-weight: 750;
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  width: fit-content;
+}
+
+.status-pill--ok {
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--success) 38%, var(--border));
+  color: var(--success);
+}
+
+.status-pill--risk {
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--danger) 38%, var(--border));
+  color: var(--danger);
+}
+
 .analytics-chip {
   align-items: center;
   background: var(--surface-soft);
@@ -393,6 +416,9 @@ textarea {
 }
 
 .completion-card {
+  --stage-color: var(--primary);
+  --stage-soft: var(--primary-soft);
+  --stage-progress: 0%;
   background: linear-gradient(135deg, var(--stage-soft), var(--surface));
   border: 1px solid color-mix(in srgb, var(--stage-color) 28%, var(--border));
   border-radius: 0.85rem;
@@ -544,6 +570,201 @@ textarea {
   height: 100%;
 }
 
+.metrics-bar-row {
+  min-width: 0;
+}
+
+.metrics-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 42rem;
+  width: 100%;
+}
+
+.metrics-table th,
+.metrics-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.metrics-table th {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.metrics-table td {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.metrics-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.future-metric-card {
+  background: color-mix(in srgb, var(--surface-soft) 86%, var(--surface));
+  border: 1px dashed var(--border-strong);
+  border-radius: 0.75rem;
+  opacity: 0.78;
+  padding: 0.9rem;
+}
+
+.future-metric-card span {
+  color: var(--text-strong);
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 750;
+}
+
+.future-metric-card p {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  margin-top: 0.35rem;
+}
+
+.ai-inline-avatar {
+  align-items: center;
+  background: var(--primary-soft);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  border-radius: 999px;
+  color: var(--primary-strong);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 850;
+  height: 2.75rem;
+  justify-content: center;
+  width: 2.75rem;
+}
+
+.ai-assistant {
+  bottom: 1.25rem;
+  position: fixed;
+  right: 1.25rem;
+  z-index: 60;
+}
+
+.ai-assistant-button {
+  align-items: center;
+  border-radius: 999px;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.22);
+  display: inline-flex;
+  height: 4rem;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
+  width: 4rem;
+}
+
+.ai-assistant-button:hover {
+  box-shadow: 0 22px 46px rgba(15, 23, 42, 0.28);
+  transform: translateY(-1px);
+}
+
+.ai-assistant-button--ok {
+  background: var(--primary);
+  border: 3px solid color-mix(in srgb, var(--primary) 42%, var(--surface));
+}
+
+.ai-assistant-button--risk {
+  background: var(--danger);
+  border: 3px solid color-mix(in srgb, var(--danger) 42%, var(--surface));
+}
+
+.ai-avatar-circles {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.ai-assistant-indicator {
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  bottom: 0.2rem;
+  height: 0.9rem;
+  position: absolute;
+  right: 0.2rem;
+  width: 0.9rem;
+}
+
+.ai-assistant-button--ok .ai-assistant-indicator {
+  background: var(--success);
+}
+
+.ai-assistant-button--risk .ai-assistant-indicator {
+  background: var(--danger);
+}
+
+.ai-assistant-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  bottom: 5rem;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+  max-width: calc(100vw - 2rem);
+  padding: 1rem;
+  position: absolute;
+  right: 0;
+  width: 24rem;
+}
+
+.ai-assistant-avatar {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 3rem;
+  justify-content: center;
+  overflow: hidden;
+  width: 3rem;
+}
+
+.ai-assistant-avatar--ok {
+  border: 3px solid var(--primary);
+}
+
+.ai-assistant-avatar--risk {
+  border: 3px solid var(--danger);
+}
+
+.ai-assistant-close {
+  align-items: center;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+  height: 2rem;
+  justify-content: center;
+  line-height: 1;
+  width: 2rem;
+}
+
+.ai-assistant-close:hover {
+  color: var(--text-strong);
+}
+
+.ai-command-chip {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  cursor: not-allowed;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.4rem 0.65rem;
+}
+
 .task-list-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -618,6 +839,16 @@ textarea {
   .stage-row-header {
     gap: 0.75rem;
   }
+
+  .ai-assistant {
+    bottom: 0.9rem;
+    right: 0.9rem;
+  }
+
+  .ai-assistant-panel {
+    bottom: 4.75rem;
+    width: calc(100vw - 1.8rem);
+  }
 }
 
 button:focus-visible,
@@ -672,6 +903,42 @@ textarea:focus-visible {
     background: var(--surface);
     border-color: var(--border);
     color: var(--text-strong);
+  }
+
+  select.field {
+    --select-arrow-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='20'%20height='20'%20viewBox='0%200%2020%2020'%20fill='none'%3E%3Cpath%20d='M6%208l4%204%204-4'%20stroke='%2364748b'%20stroke-width='1.8'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E");
+    appearance: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--surface);
+    background-image:
+      linear-gradient(
+        90deg,
+        transparent calc(100% - 2rem),
+        color-mix(in srgb, var(--surface-soft) 78%, var(--surface)) calc(100% - 2rem)
+      ),
+      var(--select-arrow-icon);
+    background-position:
+      right top,
+      right 0.6rem center;
+    background-repeat: no-repeat;
+    background-size:
+      2rem 100%,
+      1rem 1rem;
+    cursor: pointer;
+    padding-right: 2.3rem;
+  }
+
+  [data-theme="dark"] select.field {
+    --select-arrow-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='20'%20height='20'%20viewBox='0%200%2020%2020'%20fill='none'%3E%3Cpath%20d='M6%208l4%204%204-4'%20stroke='%239da6ba'%20stroke-width='1.8'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+
+  select.field:hover {
+    border-color: var(--border-strong);
+  }
+
+  select.field:disabled {
+    cursor: not-allowed;
   }
 
   .field::placeholder {

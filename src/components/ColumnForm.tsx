@@ -24,9 +24,9 @@ export function ColumnForm({ isDisabled, onCreateColumn }: ColumnFormProps) {
   }
 
   return (
-    <form className="grid gap-3 sm:grid-cols-[1fr_0.8fr_auto] sm:items-end" onSubmit={handleSubmit}>
+    <form className="grid gap-2 sm:grid-cols-[minmax(10rem,0.9fr)_minmax(11rem,1.1fr)_auto] sm:items-end" onSubmit={handleSubmit}>
       <div>
-        <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor="column-name">
+        <label className="mb-1.5 block text-sm font-semibold text-slate-800" htmlFor="column-name">
           Новый этап
         </label>
         <input
@@ -40,7 +40,7 @@ export function ColumnForm({ isDisabled, onCreateColumn }: ColumnFormProps) {
         />
       </div>
       <div>
-        <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor="column-type">
+        <label className="mb-1.5 block text-sm font-semibold text-slate-800" htmlFor="column-type">
           Тип этапа
         </label>
         <select

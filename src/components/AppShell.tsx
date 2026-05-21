@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 
-export type PageKey = "dashboard" | "tasks" | "kanban";
+export type PageKey = "dashboard" | "tasks" | "kanban" | "metrics";
 export type ThemeMode = "light" | "dark";
 
 const navItems: Array<{ key: PageKey; label: string }> = [
   { key: "dashboard", label: "Дашборд" },
   { key: "tasks", label: "Задачи" },
   { key: "kanban", label: "Канбан" },
+  { key: "metrics", label: "Метрики" },
 ];
 
 interface AppShellProps {

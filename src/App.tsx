@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { AiAssistant } from "./components/AiAssistant";
 import { AppShell, type PageKey, type ThemeMode } from "./components/AppShell";
 import { BoardControls } from "./components/BoardControls";
 import { EmptyState } from "./components/EmptyState";
@@ -15,6 +16,9 @@ const TasksPage = lazy(() =>
 const KanbanPage = lazy(() =>
   import("./pages/KanbanPage").then((module) => ({ default: module.KanbanPage })),
 );
+const MetricsPage = lazy(() =>
+  import("./pages/MetricsPage").then((module) => ({ default: module.MetricsPage })),
+);
 
 const THEME_STORAGE_KEY = "syveren-theme";
 
@@ -24,11 +28,11 @@ function getInitialTheme(): ThemeMode {
     return storedTheme;
   }
 
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "light";
 }
 
 export function App() {
-  const [activePage, setActivePage] = useState<PageKey>("dashboard");
+  const [activePage, setActivePage] = useState<PageKey>("kanban");
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   const data = useKanbanData();
 
@@ -92,6 +96,19 @@ export function App() {
               tasks={data.tasks}
               onSaveTask={data.saveTask}
             />
+          ) : activePage === "metrics" ? (
+            <MetricsPage
+              activeBoard={data.activeBoard}
+              activeProject={data.activeProject}
+              analyticsError={data.analyticsError}
+              analyticsSummary={data.analyticsSummary}
+              boards={data.boards}
+              columns={data.columns}
+              isLoading={data.isBoardLoading}
+              projects={data.projects}
+              tasks={data.tasks}
+              onRefreshMetrics={data.refreshAnalyticsSummary}
+            />
           ) : (
             <KanbanPage
               activeBoard={data.activeBoard}
@@ -103,6 +120,11 @@ export function App() {
           )}
         </Suspense>
       </div>
+
+      <AiAssistant
+        hasError={Boolean(data.error || data.operationError || data.analyticsError)}
+        healthStatus={data.healthStatus}
+      />
     </AppShell>
   );
 }

@@ -65,6 +65,7 @@ export function useKanbanData() {
   const [columns, setColumns] = useState<ColumnRead[]>([]);
   const [projectTasks, setProjectTasks] = useState<TaskRead[]>([]);
   const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBoardLoading, setIsBoardLoading] = useState(false);
@@ -155,15 +156,16 @@ export function useKanbanData() {
     }
   }, []);
 
-  const refreshAnalyticsSummary = useCallback(async (projectId: number, boardId?: number | null) => {
+  const refreshAnalyticsSummary = useCallback(async () => {
+    setAnalyticsError(null);
+
     try {
-      const summary = await getAnalyticsSummary({
-        projectId,
-        boardId: boardId ?? undefined,
-      });
+      const summary = await getAnalyticsSummary();
       setAnalyticsSummary(summary);
+      return summary;
     } catch {
-      setAnalyticsSummary(null);
+      setAnalyticsError("Не удалось загрузить метрики");
+      return null;
     }
   }, []);
 
@@ -188,15 +190,15 @@ export function useKanbanData() {
   useEffect(() => {
     if (!activeProjectId) {
       setAnalyticsSummary(null);
+      setAnalyticsError(null);
       return;
     }
 
     let isCancelled = false;
 
-    void getAnalyticsSummary({
-      projectId: activeProjectId,
-      boardId: activeBoardId ?? undefined,
-    })
+    setAnalyticsError(null);
+
+    void getAnalyticsSummary()
       .then((summary) => {
         if (!isCancelled) {
           setAnalyticsSummary(summary);
@@ -204,7 +206,7 @@ export function useKanbanData() {
       })
       .catch(() => {
         if (!isCancelled) {
-          setAnalyticsSummary(null);
+          setAnalyticsError("Не удалось загрузить метрики");
         }
       });
 
@@ -311,7 +313,7 @@ export function useKanbanData() {
         }
 
         await refreshProjectData(activeProjectId, activeBoardId ?? undefined);
-        await refreshAnalyticsSummary(activeProjectId, activeBoardId);
+        await refreshAnalyticsSummary();
       }),
     [activeBoardId, activeProjectId, refreshAnalyticsSummary, refreshProjectData, runMutation],
   );
@@ -325,7 +327,7 @@ export function useKanbanData() {
 
         await moveTask(task.id, { column_id: columnId });
         await refreshProjectData(activeProjectId, activeBoardId ?? undefined);
-        await refreshAnalyticsSummary(activeProjectId, activeBoardId);
+        await refreshAnalyticsSummary();
       }, {
         errorMessage: "Не удалось переместить задачу. Попробуйте ещё раз.",
       }),
@@ -368,6 +370,7 @@ export function useKanbanData() {
     columns: columnsWithTasks,
     tasks,
     analyticsSummary,
+    analyticsError,
     healthStatus,
     isLoading,
     isBoardLoading,
@@ -378,6 +381,7 @@ export function useKanbanData() {
     refreshWorkspace,
     refreshProjectData,
     refreshColumns,
+    refreshAnalyticsSummary,
     createProject: handleCreateProject,
     selectProject: handleSelectProject,
     createBoard: handleCreateBoard,

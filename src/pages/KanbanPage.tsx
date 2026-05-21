@@ -406,8 +406,8 @@ export function KanbanPage({
 
   return (
     <div className="space-y-6">
-      <section className="page-panel p-5">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <section className="page-panel px-5 py-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-xl font-bold text-slate-950">Канбан</h2>
             <p className="mt-1 text-sm text-slate-600">
