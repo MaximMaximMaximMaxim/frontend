@@ -84,14 +84,15 @@ export function BoardControls({
                 className="mb-2 block text-sm font-semibold text-slate-800"
                 htmlFor="project-name"
               >
-                Новый проект
+                Новый проект <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
+                aria-required="true"
                 className="field"
                 disabled={isDisabled}
                 id="project-name"
                 maxLength={200}
-                placeholder="Название проекта"
+                placeholder="Проект"
                 value={projectName}
                 onChange={(event) => setProjectName(event.target.value)}
               />
@@ -107,7 +108,7 @@ export function BoardControls({
                 className="field"
                 disabled={isDisabled}
                 id="project-description"
-                placeholder="Необязательно"
+                placeholder="Кратко"
                 value={projectDescription}
                 onChange={(event) => setProjectDescription(event.target.value)}
               />
@@ -152,14 +153,15 @@ export function BoardControls({
                 className="mb-2 block text-sm font-semibold text-slate-800"
                 htmlFor="board-name"
               >
-                Новая доска
+                Новая доска <span className="required-mark" aria-hidden="true">*</span>
               </label>
               <input
+                aria-required="true"
                 className="field"
                 disabled={isDisabled || !activeProjectId}
                 id="board-name"
                 maxLength={200}
-                placeholder="Название доски"
+                placeholder="Доска"
                 value={boardName}
                 onChange={(event) => setBoardName(event.target.value)}
               />

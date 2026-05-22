@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { analyzeMessages } from "../api/assistant";
 import assistantBlueUrl from "../assets/assistant/assistant-blue.png";
 import assistantRedUrl from "../assets/assistant/assistant-red.png";
@@ -35,7 +35,7 @@ const INTRO_MESSAGE: UiMessage = {
 };
 
 const SUGGESTED_PROMPTS = [
-  "Что сейчас требует внимания?",
+  "Где сейчас главный риск?",
   "Покажи риски по текущей доске",
   "Сколько задач в работе и закрыто?",
   "Как обстоят дела с багами?",
@@ -144,7 +144,7 @@ function buildLocalMetricAnswer(
       `- Сейчас в работе: ${formatMetricNumber(analyticsMetrics?.wip)}`,
       `- Закрыто за период: ${formatMetricNumber(analyticsMetrics?.throughput)}`,
       `- Незакрытый прирост задач: ${formatMetricNumber(analyticsMetaMetrics?.flow_debt)}`,
-      "Данные взяты из загруженных метрик API.",
+      "Сводка собрана по текущим показателям проекта.",
     ].join("\n");
   }
 
@@ -153,7 +153,7 @@ function buildLocalMetricAnswer(
       `По текущему контексту${scope ? ` (${scope})` : ""}:`,
       `- Баги: ${formatMetricNumber(analyticsMetrics?.bug_count)}`,
       `- Среднее закрытие багов: ${formatMetricNumber(analyticsMetrics?.bug_fix_time_hours_avg, " ч")}`,
-      `- Типы работ доступны в /analytics/metrics.`,
+      "- Разрез типов работ доступен в текущих показателях.",
     ].join("\n");
   }
 
@@ -169,7 +169,7 @@ function buildLocalMetricAnswer(
       `- Давно в работе: ${formatMetricNumber(analyticsMetrics?.aging_wip_count)}`,
       `- Закрыто в срок: ${formatMetricRatio(analyticsMetrics?.on_time_delivery)}`,
       `- Стабильность сроков: ${formatMetricNumber(analyticsMetaMetrics?.predictability_score)}`,
-      "Это локальная сводка по уже загруженным API-метрикам.",
+      "Это сводка по текущим показателям доски.",
     ].join("\n");
   }
 
@@ -189,8 +189,23 @@ export function AiAssistant({
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [assistantError, setAssistantError] = useState<string | null>(null);
+  const messageEndRef = useRef<HTMLDivElement | null>(null);
 
   const isHealthy = assistantError === null;
+  const shouldShowSuggestedPrompts = !messages.some((message) => message.role === "user");
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      messageEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [isOpen, isSending, messages.length]);
+
   const statusLabel = useMemo(() => {
     if (isSending) {
       return "Ассистент анализирует данные";
@@ -201,10 +216,10 @@ export function AiAssistant({
     }
 
     if (hasError) {
-      return "Данные проекта загружены частично";
+      return "Часть данных проекта пока недоступна";
     }
 
-    return "Готов к аналитике по API";
+    return "Готов к аналитике проекта";
   }, [assistantError, hasError, isSending]);
 
   const submitPrompt = async (rawPrompt: string) => {
@@ -287,7 +302,7 @@ export function AiAssistant({
     <div className="ai-assistant" aria-live="polite">
       {isOpen ? (
         <section className="ai-assistant-panel">
-          <div className="flex items-start justify-between gap-4">
+          <div className="ai-assistant-header flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">
               <div
                 className={
@@ -311,7 +326,14 @@ export function AiAssistant({
               type="button"
               onClick={() => setIsOpen(false)}
             >
-              ×
+              <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 18 18" width="18">
+                <path
+                  d="M5 5l8 8M13 5l-8 8"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="1.9"
+                />
+              </svg>
             </button>
           </div>
 
@@ -348,21 +370,24 @@ export function AiAssistant({
                 <p>Смотрю метрики и собираю ответ...</p>
               </article>
             ) : null}
+            <div ref={messageEndRef} aria-hidden="true" />
           </div>
 
-          <div className="ai-command-grid" aria-label="Быстрые запросы">
-            {SUGGESTED_PROMPTS.map((prompt) => (
-              <button
-                className="ai-command-chip"
-                disabled={isSending}
-                key={prompt}
-                type="button"
-                onClick={() => void submitPrompt(prompt)}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
+          {shouldShowSuggestedPrompts ? (
+            <div className="ai-command-grid" aria-label="Быстрые запросы">
+              {SUGGESTED_PROMPTS.map((prompt) => (
+                <button
+                  className="ai-command-chip"
+                  disabled={isSending}
+                  key={prompt}
+                  type="button"
+                  onClick={() => void submitPrompt(prompt)}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           {assistantError ? <p className="ai-assistant-error">{assistantError}</p> : null}
 
@@ -371,7 +396,7 @@ export function AiAssistant({
               aria-label="Вопрос ассистенту"
               className="field ai-input"
               disabled={isSending}
-              placeholder="Спросите про риски, задачи в работе, закрытие или сроки"
+              placeholder="Спросите про риски или сроки"
               rows={2}
               value={draft}
               onChange={(event) => setDraft(event.target.value)}

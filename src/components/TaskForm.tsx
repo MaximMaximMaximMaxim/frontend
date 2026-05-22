@@ -85,7 +85,7 @@ export function TaskForm({
             {editingTask ? "Редактирование задачи" : "Новая задача"}
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Поля соответствуют текущей OpenAPI-схеме задачи.
+            Заполните основные параметры задачи.
           </p>
         </div>
         {editingTask ? (

@@ -34,7 +34,7 @@ export function DashboardPage({
   healthStatus,
 }: DashboardPageProps) {
   const isHealthOk = healthStatus === "ok";
-  const dataStatus = analyticsSummary ? "Сводка API загружена" : "Сводка API недоступна";
+  const dataStatus = analyticsSummary ? "Сводка обновлена" : "Сводка пока недоступна";
 
   return (
     <div className="space-y-6">
@@ -58,7 +58,7 @@ export function DashboardPage({
                 : "status-pill status-pill--risk"
             }
           >
-            API health: {healthStatus ?? "не проверен"}
+            {isHealthOk ? "Система работает" : "Система проверяется"}
           </div>
         </div>
       </section>
@@ -101,8 +101,9 @@ export function DashboardPage({
             <div>
               <h3 className="text-lg font-semibold text-slate-950">ИИ-ассистент</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                ИИ-ассистент подключён к analytics agent API. Откройте плавающую кнопку справа,
-                чтобы спросить про риски, задачи в работе, закрытые задачи за период, сроки или качество потока.
+                ИИ-ассистент помогает быстро разобрать риски, задачи в работе,
+                закрытые задачи за период, сроки и качество потока. Откройте плавающую
+                кнопку справа, чтобы задать вопрос по текущему проекту.
               </p>
             </div>
           </div>

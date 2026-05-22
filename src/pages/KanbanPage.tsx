@@ -339,7 +339,7 @@ function KanbanInsightsPanel({ columns }: { columns: ColumnWithTasks[] }) {
         </p>
         <p className="mt-2 text-2xl font-bold text-slate-950">{completionPercent}%</p>
         <p className="mt-1 text-xs leading-5 text-slate-500">
-          Рассчитано по задачам активной доски из API.
+          Рассчитано по задачам активной доски.
         </p>
       </div>
     </aside>
@@ -415,7 +415,7 @@ export function KanbanPage({
           <div>
             <h2 className="text-xl font-bold text-slate-950">Канбан</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Задачи загружаются отдельно через API задач и группируются по колонкам доски.
+              Задачи сгруппированы по колонкам активной доски.
             </p>
           </div>
           <ColumnForm isDisabled={isMutating} onCreateColumn={onCreateColumn} />

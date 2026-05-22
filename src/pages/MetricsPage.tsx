@@ -45,7 +45,7 @@ interface MetricDefinition {
 
 type AnalyticsObject = Record<string, AnalyticsValue>;
 
-const API_METRIC_CARDS: MetricDefinition[] = [
+const METRIC_CARDS: MetricDefinition[] = [
   { key: "throughput", label: "Завершено за период", format: "integer" },
   { key: "work_started", label: "Начато за период", format: "integer" },
   { key: "work_finished", label: "Закрыто за период", format: "integer" },
@@ -60,7 +60,7 @@ const API_METRIC_CARDS: MetricDefinition[] = [
   { key: "aging_wip_count", label: "Давно в работе", format: "integer" },
 ];
 
-const API_META_CARDS: MetricDefinition[] = [
+const META_CARDS: MetricDefinition[] = [
   { key: "predictability_score", label: "Стабильность сроков", format: "number" },
   { key: "wip_to_throughput_ratio", label: "Нагрузка к закрытию", format: "number" },
   { key: "flow_debt", label: "Незакрытый прирост задач", format: "integer" },
@@ -380,8 +380,8 @@ export function MetricsPage({
   ];
 
   const hasBoardData = columns.length > 0 || tasks.length > 0;
-  const hasApiData = analyticsSummary !== null || analyticsMetrics !== null || analyticsMetaMetrics !== null;
-  const hasNoData = !hasBoardData && !hasApiData;
+  const hasMetricData = analyticsSummary !== null || analyticsMetrics !== null || analyticsMetaMetrics !== null;
+  const hasNoData = !hasBoardData && !hasMetricData;
 
   if (!activeProject || !activeBoard) {
     return (
@@ -403,7 +403,7 @@ export function MetricsPage({
           <div>
             <h2 className="text-xl font-bold text-slate-950">Метрики</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Показатели берутся из /analytics/summary, /analytics/metrics и /analytics/metametrics.
+              Актуальная сводка по выбранному проекту и доске.
             </p>
             <p className="mt-2 text-sm text-slate-600">
               Проект: {activeProject.name} · Доска: {activeBoard.name}
@@ -419,7 +419,7 @@ export function MetricsPage({
 
       {hasNoData ? (
         <EmptyState
-          description="Добавьте задачи или дождитесь ответа analytics API, чтобы увидеть показатели."
+          description="Добавьте задачи или дождитесь обновления, чтобы увидеть показатели."
           title="Недостаточно данных для отображения"
         />
       ) : (
@@ -433,37 +433,36 @@ export function MetricsPage({
             <MetricCard
               label="Закрыто за период"
               value={analyticsSummary?.closed_in_period ?? "—"}
-              description="/analytics/summary"
+              description="За текущий период"
             />
             <MetricCard
               label="Среднее завершение"
               value={formatNullableNumber(analyticsSummary?.average_completion_time_hours, " ч")}
-              description="/analytics/summary"
+              description="По закрытым задачам"
             />
             <MetricCard
               label="Среднее до старта"
               value={formatNullableNumber(analyticsSummary?.average_time_to_start_hours, " ч")}
-              description="/analytics/summary"
+              description="От создания до начала"
             />
             <MetricCard
               label="Закрытие багов"
               value={formatNullableNumber(analyticsSummary?.average_bug_close_time_hours, " ч")}
-              description="/analytics/summary"
+              description="Среднее время"
             />
             <MetricCard label="Без исполнителя" value={unassignedTasks} />
           </section>
 
           <section>
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-slate-950">Метрики API</h3>
+              <h3 className="text-lg font-semibold text-slate-950">Рабочие метрики</h3>
               <p className="text-sm text-slate-600">
-                Значения запрошены через /analytics/metrics с фильтрами текущего проекта и доски.
+                Ключевые показатели по текущему проекту и доске.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {API_METRIC_CARDS.map((metric) => (
+              {METRIC_CARDS.map((metric) => (
                 <MetricCard
-                  description="/analytics/metrics"
                   key={metric.key}
                   label={metric.label}
                   value={formatMetricValue(analyticsMetrics?.[metric.key], metric.format)}
@@ -474,15 +473,14 @@ export function MetricsPage({
 
           <section>
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-slate-950">Метаметрики API</h3>
+              <h3 className="text-lg font-semibold text-slate-950">Расширенные показатели</h3>
               <p className="text-sm text-slate-600">
-                Производные показатели запрошены через /analytics/metametrics.
+                Производные показатели по стабильности, нагрузке и потоку задач.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {API_META_CARDS.map((metric) => (
+              {META_CARDS.map((metric) => (
                 <MetricCard
-                  description="/analytics/metametrics"
                   key={metric.key}
                   label={metric.label}
                   value={formatMetricValue(analyticsMetaMetrics?.[metric.key], metric.format)}
@@ -497,7 +495,7 @@ export function MetricsPage({
                 <div>
                   <h3 className="text-lg font-semibold text-slate-950">Распределение по этапам</h3>
                   <p className="text-sm text-slate-600">
-                    Данные активной доски из загруженных колонок и задач.
+                    Распределение задач активной доски по этапам.
                   </p>
                 </div>
                 <span className="analytics-chip">{tasks.length} задач</span>
@@ -545,7 +543,7 @@ export function MetricsPage({
             <article className="panel analytics-card p-5">
               <div>
                 <h3 className="text-lg font-semibold text-slate-950">Задачи по статусам</h3>
-                <p className="text-sm text-slate-600">Распределение status_counts из /analytics/metrics.</p>
+                <p className="text-sm text-slate-600">Распределение задач по статусам.</p>
               </div>
               <HorizontalBars
                 items={apiStatusDistribution}
@@ -556,7 +554,7 @@ export function MetricsPage({
             <article className="panel analytics-card p-5">
               <div>
                 <h3 className="text-lg font-semibold text-slate-950">Задачи в работе по колонкам</h3>
-                <p className="text-sm text-slate-600">Активные задачи по колонкам из /analytics/metrics.</p>
+                <p className="text-sm text-slate-600">Активные задачи по колонкам.</p>
               </div>
               <HorizontalBars
                 items={wipByColumnDistribution}
@@ -567,7 +565,7 @@ export function MetricsPage({
             <article className="panel analytics-card p-5">
               <div>
                 <h3 className="text-lg font-semibold text-slate-950">Приоритеты задач</h3>
-                <p className="text-sm text-slate-600">Поле priority_mix из /analytics/metrics.</p>
+                <p className="text-sm text-slate-600">Распределение задач по приоритетам.</p>
               </div>
               <HorizontalBars items={priorityDistribution} total={tasks.length} />
             </article>
@@ -575,7 +573,7 @@ export function MetricsPage({
             <article className="panel analytics-card p-5">
               <div>
                 <h3 className="text-lg font-semibold text-slate-950">Типы работ</h3>
-                <p className="text-sm text-slate-600">Разрез фич и багов из /analytics/metrics.</p>
+                <p className="text-sm text-slate-600">Разрез фич и багов.</p>
               </div>
               <HorizontalBars
                 items={workTypeDistribution}
@@ -589,7 +587,7 @@ export function MetricsPage({
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-slate-950">Время в статусе</h3>
                 <p className="text-sm text-slate-600">
-                  Среднее время по колонкам из time_in_status_hours_avg.
+                  Среднее время прохождения по колонкам.
                 </p>
               </div>
               <div className="overflow-x-auto">
@@ -634,7 +632,7 @@ export function MetricsPage({
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-slate-950">Перцентили</h3>
                 <p className="text-sm text-slate-600">
-                  P50/P75/P85/P95 по времени прохождения задач из /analytics/metametrics.
+                  P50/P75/P85/P95 по времени прохождения задач.
                 </p>
               </div>
               <div className="overflow-x-auto">
