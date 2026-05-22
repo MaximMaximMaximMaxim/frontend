@@ -80,7 +80,7 @@ function normalizeAssistantResponse(answer: string | undefined, errors: string[]
   }
 
   if (errors?.length) {
-    return "Ассистент получил данные, но не смог собрать финальный ответ. Детали ошибки показаны ниже.";
+    return "Ассистент получил данные, но не смог собрать финальный ответ.";
   }
 
   return "Ассистент вернул пустой ответ. Попробуйте переформулировать вопрос.";
@@ -189,9 +189,10 @@ export function AiAssistant({
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [assistantError, setAssistantError] = useState<string | null>(null);
+  const [hasAssistantResponseError, setHasAssistantResponseError] = useState(false);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
 
-  const isHealthy = assistantError === null;
+  const isHealthy = assistantError === null && !hasAssistantResponseError;
   const shouldShowSuggestedPrompts = !messages.some((message) => message.role === "user");
 
   useEffect(() => {
@@ -211,7 +212,7 @@ export function AiAssistant({
       return "Ассистент анализирует данные";
     }
 
-    if (assistantError) {
+    if (assistantError || hasAssistantResponseError) {
       return "Есть проблема с ассистентом";
     }
 
@@ -220,7 +221,7 @@ export function AiAssistant({
     }
 
     return "Готов к аналитике проекта";
-  }, [assistantError, hasError, isSending]);
+  }, [assistantError, hasAssistantResponseError, hasError, isSending]);
 
   const submitPrompt = async (rawPrompt: string) => {
     const prompt = rawPrompt.trim();
@@ -244,6 +245,7 @@ export function AiAssistant({
     setMessages((currentMessages) => [...currentMessages, userMessage]);
     setDraft("");
     setAssistantError(null);
+    setHasAssistantResponseError(false);
     setIsSending(true);
 
     try {
@@ -264,6 +266,9 @@ export function AiAssistant({
             analyticsMetaMetrics,
           )
         : null;
+      const hasEmptyErrorResponse = Boolean(
+        response.errors?.length && !fallbackAnswer && !response.answer?.trim(),
+      );
 
       const assistantMessage: UiMessage = {
         id: `assistant-${Date.now()}`,
@@ -272,6 +277,7 @@ export function AiAssistant({
           fallbackAnswer ?? normalizeAssistantResponse(response.answer, response.errors),
       };
 
+      setHasAssistantResponseError(hasEmptyErrorResponse);
       setMessages((currentMessages) => [...currentMessages, assistantMessage]);
     } catch (caughtError) {
       const message =

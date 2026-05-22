@@ -45,10 +45,12 @@ export function DashboardPage({
             <p className="mt-1 text-sm text-slate-600">
               Краткий обзор: что происходит в целом.
             </p>
-            <p className="mt-2 text-sm text-slate-600">
-              {activeProject ? `Проект: ${activeProject.name}` : "Проект не выбран"}
-              {activeBoard ? ` · Доска: ${activeBoard.name}` : ""}
-            </p>
+            <div className="page-context-chips" aria-label="Контекст страницы">
+              <span className="page-context-chip">
+                {activeProject ? activeProject.name : "Проект не выбран"}
+              </span>
+              {activeBoard ? <span className="page-context-chip">{activeBoard.name}</span> : null}
+            </div>
           </div>
 
           <div

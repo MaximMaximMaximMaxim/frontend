@@ -405,9 +405,10 @@ export function MetricsPage({
             <p className="mt-1 text-sm text-slate-600">
               Актуальная сводка по выбранному проекту и доске.
             </p>
-            <p className="mt-2 text-sm text-slate-600">
-              Проект: {activeProject.name} · Доска: {activeBoard.name}
-            </p>
+            <div className="page-context-chips" aria-label="Контекст страницы">
+              <span className="page-context-chip">{activeProject.name}</span>
+              <span className="page-context-chip">{activeBoard.name}</span>
+            </div>
           </div>
           <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600">
             Автообновление каждые 45 секунд

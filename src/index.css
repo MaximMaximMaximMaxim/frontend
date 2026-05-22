@@ -345,6 +345,32 @@ textarea {
   padding: 0.35rem 0.65rem;
 }
 
+.page-context-chips {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.6rem;
+}
+
+.page-context-chip {
+  align-items: center;
+  background: color-mix(in srgb, var(--surface-soft) 86%, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  display: inline-flex;
+  font-size: 0.86rem;
+  font-weight: 750;
+  line-height: 1.2;
+  max-width: min(100%, 24rem);
+  min-height: 2rem;
+  overflow: hidden;
+  padding: 0.38rem 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .stage-distribution {
   display: grid;
   gap: 0.8rem;
@@ -851,31 +877,77 @@ textarea {
 }
 
 .ai-message-list {
-  display: grid;
-  gap: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
   flex: 1 1 auto;
   min-height: 4rem;
   overflow-y: auto;
-  padding-right: 0.15rem;
+  padding: 0.15rem 0.55rem;
 }
 
 .ai-message {
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  color: var(--text);
+  --ai-message-bg: var(--surface-soft);
+  --ai-message-radius: 0.95rem;
+  --ai-message-tail-size: 0.72rem;
+  align-self: flex-start;
+  background: var(--ai-message-bg);
+  border: 0;
+  border-radius: var(--ai-message-radius) var(--ai-message-radius) var(--ai-message-radius) 0.35rem;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.08);
+  color: var(--text-strong);
   font-size: 0.86rem;
-  line-height: 1.55;
-  padding: 0.75rem;
+  line-height: 1.42;
+  margin-left: var(--ai-message-tail-size);
+  max-width: min(22rem, calc(100% - 1.45rem));
+  padding: 0.58rem 0.78rem;
+  position: relative;
+  width: fit-content;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
+.ai-message::after {
+  background: var(--ai-message-bg);
+  bottom: 0;
+  content: "";
+  height: calc(var(--ai-message-tail-size) * 0.9);
+  position: absolute;
+  width: var(--ai-message-tail-size);
+}
+
+.ai-message > p {
+  margin: 0;
+}
+
 .ai-message--assistant {
-  background: var(--surface-soft);
+  --ai-message-bg: var(--surface-soft);
+}
+
+.ai-message--assistant::after {
+  border-bottom-left-radius: 0.7rem;
+  border-bottom-right-radius: 0.18rem;
+  border-top-left-radius: 0.18rem;
+  left: calc(var(--ai-message-tail-size) * -0.36);
+  transform: skewX(-28deg);
+  transform-origin: right bottom;
 }
 
 .ai-message--user {
-  background: color-mix(in srgb, var(--primary-soft) 78%, var(--surface));
-  border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+  --ai-message-bg: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  align-self: flex-end;
+  border-radius: var(--ai-message-radius) var(--ai-message-radius) 0.35rem var(--ai-message-radius);
+  margin-left: 0;
+  margin-right: var(--ai-message-tail-size);
+}
+
+.ai-message--user::after {
+  border-bottom-left-radius: 0.18rem;
+  border-bottom-right-radius: 0.7rem;
+  border-top-right-radius: 0.18rem;
+  right: calc(var(--ai-message-tail-size) * -0.36);
+  transform: skewX(28deg);
+  transform-origin: left bottom;
 }
 
 .ai-message-errors {
@@ -1157,9 +1229,11 @@ textarea {
   }
 
   .ai-message {
-    border-radius: 0.7rem;
+    --ai-message-radius: 0.85rem;
+    --ai-message-tail-size: 0.64rem;
     font-size: 0.9rem;
-    padding: 0.7rem;
+    max-width: min(24rem, calc(100% - 1.25rem));
+    padding: 0.62rem 0.72rem;
   }
 
   .ai-command-grid {
