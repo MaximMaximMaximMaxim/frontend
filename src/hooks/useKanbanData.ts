@@ -5,13 +5,19 @@ import {
   buildTaskUpdatePayload,
   flattenColumnTasks,
 } from "../api/adapters";
-import { getAnalyticsSummary } from "../api/analytics";
+import {
+  getAnalyticsMetaMetrics,
+  getAnalyticsMetrics,
+  getAnalyticsSummary,
+} from "../api/analytics";
 import { createBoard, listBoards } from "../api/boards";
 import { createColumn, listColumns } from "../api/columns";
 import { getHealth } from "../api/health";
 import { createProject, listProjects } from "../api/projects";
 import { createTask, listTasks, moveTask, updateTask } from "../api/tasks";
 import type {
+  AnalyticsMetaMetrics,
+  AnalyticsMetrics,
   AnalyticsSummary,
   BoardRead,
   ColumnRead,
@@ -21,6 +27,9 @@ import type {
 } from "../types/api";
 import type { Task, TaskFormValues } from "../types/task";
 
+const PREFERRED_PROJECT_NAME_PARTS = ["транстелематика", "хакатон", "mvp"];
+const PREFERRED_BOARD_NAME_PARTS = ["план", "работ", "команд"];
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
     return error.message;
@@ -29,9 +38,36 @@ function getErrorMessage(error: unknown): string {
   return "Не удалось связаться с API. Проверьте подключение и попробуйте ещё раз.";
 }
 
+function normalizeSearchText(value: string) {
+  return value.toLocaleLowerCase("ru-RU").replace(/ё/g, "е");
+}
+
+function findPreferredProject(projects: ProjectRead[]) {
+  return projects.find((project) => {
+    const normalizedName = normalizeSearchText(project.name);
+    return PREFERRED_PROJECT_NAME_PARTS.every((namePart) =>
+      normalizedName.includes(namePart),
+    );
+  });
+}
+
+function findPreferredBoard(boards: BoardRead[]) {
+  return boards.find((board) => {
+    const normalizedName = normalizeSearchText(board.name);
+    return PREFERRED_BOARD_NAME_PARTS.every((namePart) =>
+      normalizedName.includes(namePart),
+    );
+  });
+}
+
 function pickProjectId(projects: ProjectRead[], currentId: number | null, preferredId?: number) {
   if (preferredId && projects.some((project) => project.id === preferredId)) {
     return preferredId;
+  }
+
+  const preferredProject = findPreferredProject(projects);
+  if (preferredProject) {
+    return preferredProject.id;
   }
 
   if (currentId && projects.some((project) => project.id === currentId)) {
@@ -44,6 +80,11 @@ function pickProjectId(projects: ProjectRead[], currentId: number | null, prefer
 function pickBoardId(boards: BoardRead[], currentId: number | null, preferredId?: number) {
   if (preferredId && boards.some((board) => board.id === preferredId)) {
     return preferredId;
+  }
+
+  const preferredBoard = findPreferredBoard(boards);
+  if (preferredBoard) {
+    return preferredBoard.id;
   }
 
   if (currentId && boards.some((board) => board.id === currentId)) {
@@ -65,6 +106,9 @@ export function useKanbanData() {
   const [columns, setColumns] = useState<ColumnRead[]>([]);
   const [projectTasks, setProjectTasks] = useState<TaskRead[]>([]);
   const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
+  const [analyticsMetrics, setAnalyticsMetrics] = useState<AnalyticsMetrics | null>(null);
+  const [analyticsMetaMetrics, setAnalyticsMetaMetrics] =
+    useState<AnalyticsMetaMetrics | null>(null);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -160,14 +204,28 @@ export function useKanbanData() {
     setAnalyticsError(null);
 
     try {
-      const summary = await getAnalyticsSummary();
+      const [summary, metrics, metaMetrics] = await Promise.all([
+        getAnalyticsSummary(),
+        getAnalyticsMetrics({
+          projectId: activeProjectId,
+          boardId: activeBoardId,
+        }),
+        getAnalyticsMetaMetrics({
+          projectId: activeProjectId,
+          boardId: activeBoardId,
+        }),
+      ]);
       setAnalyticsSummary(summary);
+      setAnalyticsMetrics(metrics);
+      setAnalyticsMetaMetrics(metaMetrics);
       return summary;
     } catch {
       setAnalyticsError("Не удалось загрузить метрики");
+      setAnalyticsMetrics(null);
+      setAnalyticsMetaMetrics(null);
       return null;
     }
-  }, []);
+  }, [activeBoardId, activeProjectId]);
 
   useEffect(() => {
     void refreshWorkspace();
@@ -190,6 +248,8 @@ export function useKanbanData() {
   useEffect(() => {
     if (!activeProjectId) {
       setAnalyticsSummary(null);
+      setAnalyticsMetrics(null);
+      setAnalyticsMetaMetrics(null);
       setAnalyticsError(null);
       return;
     }
@@ -198,15 +258,29 @@ export function useKanbanData() {
 
     setAnalyticsError(null);
 
-    void getAnalyticsSummary()
-      .then((summary) => {
+    void Promise.all([
+      getAnalyticsSummary(),
+      getAnalyticsMetrics({
+        projectId: activeProjectId,
+        boardId: activeBoardId,
+      }),
+      getAnalyticsMetaMetrics({
+        projectId: activeProjectId,
+        boardId: activeBoardId,
+      }),
+    ])
+      .then(([summary, metrics, metaMetrics]) => {
         if (!isCancelled) {
           setAnalyticsSummary(summary);
+          setAnalyticsMetrics(metrics);
+          setAnalyticsMetaMetrics(metaMetrics);
         }
       })
       .catch(() => {
         if (!isCancelled) {
           setAnalyticsError("Не удалось загрузить метрики");
+          setAnalyticsMetrics(null);
+          setAnalyticsMetaMetrics(null);
         }
       });
 
@@ -370,6 +444,8 @@ export function useKanbanData() {
     columns: columnsWithTasks,
     tasks,
     analyticsSummary,
+    analyticsMetrics,
+    analyticsMetaMetrics,
     analyticsError,
     healthStatus,
     isLoading,

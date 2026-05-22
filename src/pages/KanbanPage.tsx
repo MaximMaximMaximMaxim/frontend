@@ -18,6 +18,7 @@ import { formatColumnType } from "../api/adapters";
 import type { ColumnWithTasks } from "../api/adapters";
 import { ColumnForm } from "../components/ColumnForm";
 import { EmptyState } from "../components/EmptyState";
+import { PriorityBadge } from "../components/PriorityBadge";
 import type { BoardRead, ColumnType } from "../types/api";
 import type { Task } from "../types/task";
 
@@ -112,7 +113,10 @@ function KanbanTaskContent({
         <p className="mt-2 text-sm leading-6 text-slate-600">{task.description}</p>
       ) : null}
       <div className="mt-3 grid gap-1 text-xs text-slate-500">
-        <span>Приоритет: {task.priority}</span>
+        <span className="task-meta-row">
+          <span>Приоритет:</span>
+          <PriorityBadge priority={task.priority} />
+        </span>
         <span>Оценка: {task.estimate ?? "—"}</span>
       </div>
 
@@ -335,7 +339,7 @@ function KanbanInsightsPanel({ columns }: { columns: ColumnWithTasks[] }) {
         </p>
         <p className="mt-2 text-2xl font-bold text-slate-950">{completionPercent}%</p>
         <p className="mt-1 text-xs leading-5 text-slate-500">
-          Блок готов для расширения AI-рекомендациями и прогнозами после появления API.
+          Рассчитано по задачам активной доски из API.
         </p>
       </div>
     </aside>

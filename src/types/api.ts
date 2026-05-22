@@ -108,6 +108,27 @@ export interface AnalyticsSummary {
   overdue_tasks: number;
 }
 
+export type AnalyticsValue =
+  | string
+  | number
+  | boolean
+  | null
+  | AnalyticsValue[]
+  | { [key: string]: AnalyticsValue };
+
+export type AnalyticsMetrics = Record<string, AnalyticsValue>;
+export type AnalyticsMetaMetrics = Record<string, AnalyticsValue>;
+
+export interface AssistantChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+export interface AssistantAnalyzeResponse {
+  answer?: string;
+  errors?: string[];
+}
+
 export interface ValidationError {
   loc: Array<string | number>;
   msg: string;

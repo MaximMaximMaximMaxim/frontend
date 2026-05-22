@@ -71,10 +71,14 @@ export function DashboardPage({
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Completed tasks" value={analyticsSummary?.completed_tasks ?? "—"} />
-        <MetricCard label="Overdue tasks" value={analyticsSummary?.overdue_tasks ?? "—"} />
-        <MetricCard label="Completion ratio" value={formatRatio(analyticsSummary?.completion_ratio)} />
-        <MetricCard label="Bug tasks" value={analyticsSummary?.bug_tasks ?? "—"} />
+        <MetricCard label="Выполнено задач" value={analyticsSummary?.completed_tasks ?? "—"} />
+        <MetricCard label="Просрочено задач" value={analyticsSummary?.overdue_tasks ?? "—"} />
+        <MetricCard label="Доля выполнения" value={formatRatio(analyticsSummary?.completion_ratio)} />
+        <MetricCard
+          label="Задачи в исправлении"
+          value={analyticsSummary?.bug_tasks ?? "—"}
+          description="Колонка типа fix"
+        />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
@@ -97,8 +101,8 @@ export function DashboardPage({
             <div>
               <h3 className="text-lg font-semibold text-slate-950">ИИ-ассистент</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                ИИ-ассистент пока недоступен: в текущей OpenAPI-спецификации отсутствует
-                endpoint для AI-аналитики.
+                ИИ-ассистент подключён к analytics agent API. Откройте плавающую кнопку справа,
+                чтобы спросить про риски, задачи в работе, закрытые задачи за период, сроки или качество потока.
               </p>
             </div>
           </div>

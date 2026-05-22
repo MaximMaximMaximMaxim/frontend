@@ -100,6 +100,8 @@ export function App() {
             <MetricsPage
               activeBoard={data.activeBoard}
               activeProject={data.activeProject}
+              analyticsMetaMetrics={data.analyticsMetaMetrics}
+              analyticsMetrics={data.analyticsMetrics}
               analyticsError={data.analyticsError}
               analyticsSummary={data.analyticsSummary}
               boards={data.boards}
@@ -122,6 +124,10 @@ export function App() {
       </div>
 
       <AiAssistant
+        activeBoard={data.activeBoard}
+        activeProject={data.activeProject}
+        analyticsMetaMetrics={data.analyticsMetaMetrics}
+        analyticsMetrics={data.analyticsMetrics}
         hasError={Boolean(data.error || data.operationError || data.analyticsError)}
         healthStatus={data.healthStatus}
       />

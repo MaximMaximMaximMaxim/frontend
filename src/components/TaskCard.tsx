@@ -1,4 +1,4 @@
-import { formatTaskPriority } from "../api/adapters";
+import { PriorityBadge } from "./PriorityBadge";
 import type { Task } from "../types/task";
 
 interface TaskCardProps {
@@ -39,7 +39,9 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
       <dl className="mt-4 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
         <div>
           <dt className="font-semibold text-slate-500">Приоритет</dt>
-          <dd>{formatTaskPriority(task.priority)}</dd>
+          <dd className="mt-1">
+            <PriorityBadge priority={task.priority} />
+          </dd>
         </div>
         <div>
           <dt className="font-semibold text-slate-500">Срок</dt>

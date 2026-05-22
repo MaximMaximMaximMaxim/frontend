@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: https://api.ustyantsevmd.ru
+        VITE_ASSISTANT_API_BASE_URL: /assistant-api
     ports:
       - "8080:80"
     restart: unless-stopped

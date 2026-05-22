@@ -26,7 +26,7 @@ export const COLUMN_TYPE_OPTIONS: Array<{ value: ColumnType; label: string }> = 
   { value: "done", label: "Готово" },
   { value: "fix", label: "Исправление" },
   { value: "archived", label: "Архив" },
-  { value: "custom", label: "Пользовательский" },
+  { value: "custom", label: "Другой этап" },
 ];
 
 const priorityValues = new Set(TASK_PRIORITY_OPTIONS.map((option) => option.value));
